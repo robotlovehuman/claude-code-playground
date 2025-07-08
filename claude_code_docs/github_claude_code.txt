@@ -1,0 +1,503 @@
+with Cloud Code and GitHub to build a
+new web app over the last couple weeks
+and I feel like it's sort of unlocked
+new superpowers for me so first let me
+just go through the workflow at a high
+level just to give you the taste in case
+you don't have much time and then we're
+going to circle back we're going to talk
+about the why you might need a workflow
+like this and then we'll dive into each
+of the steps in a little bit more detail
+so here's how it works i create GitHub
+issues for all the work I want to have
+done on the app in cloud code I have a
+detailed slash command with instructions
+on how to process issues at a high level
+I want it to first plan its work using
+scratch pads to break down the big issue
+into small atomic tasks then once it's
+planned its work it can create the code
+after it's created the code it can then
+test its work it can do this in two
+different ways one running the test
+suite and second it can use Puppeteer to
+click in a browser if it's made any UI
+changes then once it has tested its work
+it will commit its work to GitHub and
+open up a pull request which is then
+reviewed sometimes I review that PR
+sometimes I have Claude Code review the
+PR with a different slash command that
+I've written also I have continuous
+integration set up on GitHub via GitHub
+actions so that anytime a commit is made
+we run the test suite and we run a
+llinter and we check to make sure that
+it is safe to merge the commits into the
+main branch and then in cloud code I use
+/clear to wipe away the context window
+and then I have it tackle the next issue
+and repeat the cycle now I don't want to
+Software Development Life Cycle
+pretend like I've created the wheel here
+because what I've just described to you
+could be summed up as a cycle of plan
+create test deploy which are generally
+considered to be the four phases of the
+software development life cycle so why
+do you need a cycle like this if you
+have such powerful software coding
+agents well the software industry has
+known for a long time that writing code
+is just one phase of what's required to
+ship and maintain complex software turns
+out that some of the processes and
+systems that we built to manage the
+creation of software work really well
+with these AI coding assistants and in
+particular cloud code now to be even
+more specific the workflow I've just
+described is based heavily upon GitHub
+flow which is a workflow first published
+by Scott Shaon who is one of the
+co-founders of GitHub published this
+about 13 14 years ago when GitHub was
+just about 35 employees so this is a
+workflow that's well known that works
+really great for small teams say if your
+team was I don't know approximately the
+size of one human and one AI coding
+assistant let's go back through and talk
+about each of those four phases in a
+little bit more detail plan create test
+and deploy uh let's start off with
+creating the issues when I very first
+Creating and Refining GitHub Issues
+started working on this app I started
+that with a dictation session via Super
+Whisper and then I just worked with
+Claude to turn that into a requirements
+document and then once I had those steps
+I told Claude Code to create GitHub
+issues from there now you also need a
+way for Claude Code to interact with
+GitHub and Enthropic's recommended way
+of doing so is to install the GitHub CLI
+and this allows Cloud Code to run GH via
+Bash to interact with GitHub for some
+reason you can't install that CLI you
+could use the MCP server but the CLI is
+a recommended way of doing so now I
+would say the first mistake I really
+made here was that I had it create those
+issues it's probably about 30 or 40
+issues and then I just had to start
+working on them it was overly optimistic
+of me to assume that we could go
+straight from the GitHub issues that it
+created to writing software in reality
+my job perhaps got a little bit less fun
+because instead of writing code now I
+really needed to go and make sure that I
+was being very specific in those issues
+and really refining them and I'd say the
+more granular the more specific the more
+atomic those issues got the better
+results I had and I had a couple false
+starts where I kind of had to throw the
+whole project away and really go back
+and spend time in GitHub and say "Okay
+what do we do first what do we do second
+and how do we break this down and keep
+it really tightly scoped so that we're
+setting ourselves up for success?" In
+fact it's kind of funny i was at Twilio
+for 9 years i was a manager for a lot of
+that time and I feel like I got a little
+burned out on being a manager and I have
+really been enjoying writing code over
+the last couple years and these last
+couple weeks I feel like I had to put my
+manager hat back on i've written very
+little code myself and instead I've
+spent most of my time writing really
+detailed specs reviewing code that was
+written by someone else leaving comments
+and saying things like "H this is not
+quite good enough please try again." Or
+"Actually I thought I wanted that but
+that now that I see it that's not quite
+what I want." Or "Throw away all your
+work and uh I don't actually want this
+at all." Uh and so if you want to like
+roleplay as an engineering manager uh
+this process is actually a pretty good
+way to do that the first couple issues
+that we worked on were setting up the
+test suite and continuous integration
+most of my work that I've done over the
+last 10 years has been in Python but
+anytime I'm building a more complex web
+app and need a users table I find myself
+starting to reach back for Rails i also
+think there's something about the MVC
+framework which is not unique to Rails
+django has this too and lots of
+frameworks use the model viewcontroller
+framework but I think there's something
+about modularizing your codebase that
+makes it easier for coding agents to
+work with because they can focus on code
+that's related to one idea as opposed to
+say a main.py or an index.js that's a
+thousand lines long rails has really
+nicely integrated testing framework and
+it was really important to me from the
+Setting Up Your Foundation
+beginning to get my test suite up and
+running so that I could set up GitHub's
+continuous integration so that I could
+have my tests run automatically every
+time Claude Code was pushing commits now
+along the same lines I also set up the
+Puppeteer local MCP server and Puppeteer
+allows Claude Code to use a web browser
+to test the local changes to your app
+i've actually found this to be really
+useful as I've started in on redesigning
+the app it's also good for testing to
+see if buttons work or forms work it's
+actually very surprising and very
+satisfying to watch cloud code uh click
+around in a browser to test the work
+that it's already done so I'd say before
+you can really get moving with rapid
+iterative feature development you need
+some really well- definfined issues you
+need your app set up on a GitHub
+repository and you need continuous
+integration set up with a really good
+test suite and Puppeteer helps a lot as
+well but once you have that foundation
+in place now you're ready to go all
+right so I have some issues here let me
+talk through what happens when I have
+Claude Code work on an issue most
+important thing here is you're going to
+create a slashcomand you can do this in
+thecloud/comands
+directory a slash command is basically a
+prompt template and you can add command
+Plan: Custom Slash Commands
+line arguments to that so the argument
+that we're going to be passing into this
+one is the issue number now for my
+/command for processing issues I started
+with the one that came from the
+anthropic post on best practices for
+agent decoding that was a post written
+by Boris who is the original creator of
+cloud code and I started there and then
+I just iterated over time i added more
+to it and you can see I broken up into
+four parts plan create code test and
+deploy and uh plan is the biggest one
+you know it's perhaps the most important
+i'm telling Cloud Code to use the GitHub
+CLI to view the issue uh I also then ask
+it to go dig up some prior art on this
+so uh I do have it use what's called
+scratchpad so it basically has a
+directory in the codebase where Claude
+code can plan all of its work and I ask
+it to search those scratch pads for uh
+previous work related to this issue i
+ask it to look through PRs previous PRs
+in GitHub to see if it can find other
+work that's been done on this issue so
+it can figure out what's been done and
+why i use here the think harder uh
+prompt to trigger thinking mode uh
+Anthropic has several of these so you
+can do think hard think harder i think
+you can do think hardest and ultraink i
+cannot tell you why I've settled in on
+think harder it seems to be working well
+um maybe I need to bump this up to
+ultraink in the future i don't know uh
+but the key here is that I want it to
+break the issue down into small
+manageable tasks then I ask it to write
+that plan on a new scratchpad and to
+include a link to the issue there now
+Claude Code's going to write the code
+and after it's written some code it's
+going to commit the code or is it i
+think one of the biggest questions
+that's going to come out of this
+workflow is do you have Claude code
+write the commit for you or is it your
+responsibility to do that i have been
+Create, Test, Deploy
+convicted by Thomas Tacic he wrote this
+post a few weeks ago called All of My AI
+skeptic friends are nuts it was super
+popular it's probably the best piece of
+writing that I've read on AI assisted
+coding the link's in the description
+here i encourage you just to like read
+it it's an amazing piece of writing uh
+and there's a section he's going through
+all of the uh criticisms or objections
+from his AI skeptic friends about why
+you shouldn't use AI assisted coding so
+the objection here is but you have no
+idea what the code is and Thomas replies
+"Are you a vibe coding YouTuber?" Maybe
+uh can you not read code if so astute
+point otherwise what the is wrong
+with you you've always been responsible
+for what you merge domain you were 5
+years ago and you are tomorrow whether
+or not you use an LLM if you build
+something with an LLM that people will
+depend on read the code in fact you'll
+probably do more than that you'll spend
+5 to 10 minutes knocking it back into
+your own style and in fact as I talk to
+uh engineer friends who are working at
+large companies using claude code there
+they will actually not even let claude
+do the commit even though it's really
+great at writing commit messages but
+instead they will open up all of its
+changes in an IDE such as cursor review
+them all i've not really been doing
+either of those things on this project i
+started I I really did start there and I
+was like being very diligent opening up
+all the code and cursor uh at some point
+I have to admit I started getting lazy
+so maybe I've fallen back into the vibe
+coding YouTuber genre I guess uh but uh
+I have been letting Claude do all of the
+commits and then I do try to read the
+PRs although I will say and we'll get to
+this in a second sometimes I just have
+Claude read the PR uh but let me tell
+you what makes me feel a little bit a
+little bit better about having Claude do
+that and that's tests so when I started
+this project I wanted to be really sure
+that I had a good test suite because I
+do feel like in other projects such as
+like the games I built for my daughters
+I often run into issue where things are
+working pretty good and then Claude
+makes a change sometimes a seemingly
+simple or benign change and it breaks
+all the stuff i'm not looking for
+necessarily 100% code coverage but I do
+want to have high confidence that Claude
+can work on one feature without breaking
+the stuff it's done before all right
+finally we have planned we have created
+code we have tested the code now it is
+time to deploy i personally deploy to
+render i like it for a lot of the stuff
+I've been building lately both in the
+Python and Rails apps uh render will
+look for pushes to your main branch of
+GitHub and then automatically deploy
+your new app so in this workflow merging
+a branch into the main branch in GitHub
+is the same approximately as deploying
+to production and so the way that we set
+up a branch to merge it into main is by
+opening up a pull request so you as the
+human here working with the AI let's
+assume that you have had Claude make the
+commits and then let's assume that you
+have had Claude open the PR this is the
+place where you really can get in and
+review the changes that it's made and
+you can leave comments on the changes
+that Claude has made and then you can go
+back into the console and ask Claude to
+view those comments and to make changes
+based on them you can also set up a
+separate slash command to ask Claude to
+do a uh PR review for you now if you do
+have a slash command for doing a PR
+review what I would encourage you to do
+is to open up cloud code in a completely
+new shell and then to run it fresh and
+so that it is not doesn't have the
+context pollution of the work that it's
+already done i have a a slash command
+for doing PR reviews uh where I ask it
+to review it in the style of Sandy Mets
+sandy Mets is one of my heroes from the
+Rails world she has some great
+principles for writing beautiful
+maintainable code when I have Claude
+review the code in the style of Sandy
+Mets it reveals places where we can make
+things more maintainable or more
+readable that I would have missed and
+certainly that Claude missed on its
+first pass now I I will admit there's
+been more than a few times over the last
+couple weeks when I've had Claude write
+the code i've had Claude do the PR
+review uh I've ensured that the test
+pass and I'm like "Looks good to me."
+And I click the button to merge the poll
+request so again this the video is not
+Your job vs. AI's job
+intended to be prescriptive about the
+workflow but I think the high-level bits
+here make a lot of sense and then you
+got to figure out where in those
+individual steps of of the plan the
+create the test and deploy are you going
+to get hyper involved as the human and
+for me personally I have been hyper
+involved in the planning phase and I
+found it really difficult to delegate
+anything other than just like cleaning
+up my ideas or my pros to Claude i think
+the planning is where I've been spending
+a whole lot of time and then I
+personally for this app and the size of
+the app and size of the codebase and all
+have been able to delegate a lot of the
+creating testing and deploying or the
+reviewing of the the coding etc to
+Claude all right so finally now that I
+have merged my PR here's what I do i go
+back to claude and I run /cle
+this completely wipes away the context
+window i am not compacting the window i
+am clearing the window the idea here is
+that each issue should contain all of
+the information that Claude needs to
+perform that work it should be able to
+Context Management with /clear
+work on the issue from a cold start and
+thanks to the scratch pads and thanks to
+its ability to review PRs and all the
+previous work that's been done on the
+codebase that issue should be
+descriptive enough for it to tackle it
+with no working memory and this also
+frees up your context window it will
+help you get better results while using
+fewer tokens now let me address a quick
+question because you probably saw that
+Anthropic launched uh Claude via GitHub
+actions and this is a really cool
+feature that lets you just tag Claude in
+your directly from GitHub and have it
+work on some stuff um so I have been
+Claude via GitHub Actions
+playing with that a little bit the
+primary reason why I'm not using that is
+because as of today um that usage of the
+GitHub actions is built with metered
+billing against your API even if you're
+on a Claude Max plan so I have upgraded
+now to the $200 a month Claude Max plan
+i am finding it is totally worth it to
+get the Claw 4 Opus use um I've just
+been thrilled with the value I'm getting
+there but then I was kind of bummed to
+then get a $50 API bill from Anthropic
+after I had been using uh tagging Claude
+in GitHub and so I was like man if I'm
+already getting unlimited access uh I
+might as well just do it in the console
+and candidly I think I'm getting much
+better uh insight and results from using
+claude code in the console and so I
+actually talked to a friend Martin who
+works at Anthropic and his suggestion
+was use uh Claude in the GitHub actions
+when you're say doing a PR review and
+there's a small change perhaps a copy
+change or just like something tiny that
+needs to be tweaked but you don't
+necessarily want to go into the codebase
+and do it yourself it's really good for
+those smaller fixes but you probably
+don't want to be using GitHub actions
+for really large meaningful changes to
+your codebase uh finally let me just
+talk about work trees because uh
+Anthropic talks about this quite a bit
+Work Trees: Run Parallel Agents
+the best analogy that I have for work
+trees would be multitabling and poker
+you know you start playing online poker
+on a single table and then you realize
+you're just kind of clicking buttons
+every once in a while you could probably
+play two table at a time and then at
+some point you've bought a bigger
+monitor and you're like playing four or
+eight tables at a time that's sort of
+what running clawed work trees feels
+like uh instead of different poker
+tables up you're just tabbing between
+different tabs in the terminal and
+generally I think that the industry as a
+whole is excited about uh running coding
+agents in parallel or in the background
+and work trees is the method that you
+can use with GitHub to run multiple
+instances of Claude working on multiple
+issues at the same time i personally ran
+into two issues with it the first is
+because I'm just getting started
+building this app there's so much work
+that just simply needs to be done
+iteratively there aren't a lot of
+features that can be developed in
+parallel where the code bases don't
+touch each other um I found the
+interface for working with work trees to
+be a little bit clunky the general idea
+behind a work tree is that you create
+copies of your git repo in separate
+subdirectories and then you have one
+version of claude running in you know
+subdirectory A on let's just call it
+branch A and then you have another one
+running on branch B and they're running
+in parallel in two different directories
+on your computer um the issue that I had
+was that when I spun up a new version of
+Claude like a new Claude session I
+didn't have the same permissions that I
+had already approved on that first
+session of Claude and so every time I
+created a new branch I was having to
+approve all the permissions again and I
+just felt like I was having to babysit
+it a lot more and then what happens is
+after you have finished work on that
+issue or that branch you're supposed to
+delete that directory and then create a
+new work tree again and so every time
+you're creating a new work tree you're
+reapproving those permissions and it
+just felt like I was doing more
+babysitting and more cleaning up merge
+conflicts than it was really worth it uh
+I found that just working with a single
+cloud instance is sufficient for me now
+if you made it this far you'd probably
+also enjoy the video I did on claude
+code pro tips so check that one out
+

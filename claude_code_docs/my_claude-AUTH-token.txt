@@ -1,0 +1,10 @@
+Your OAuth token (valid for 1 year):
+
+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
+
+Store this token securely. You won't be able to see it again.
+
+Use this token by setting: export CLAUDE_CODE_OAUTH_TOKEN=<token>
+
+
+table-chairs-app % 

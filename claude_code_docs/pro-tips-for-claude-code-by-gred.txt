@@ -1,0 +1,223 @@
+hey my name is Greg i'm a developer and
+over the last few months Claude Code has
+become my default way of writing code
+and so in this video I want to walk you
+through some Claude Code pro tips these
+pro tips are primarily based on this
+post written by Boris Churnney who's the
+creator of Claude Code at Enthropic and
+we're going to go through these uh pro
+tips pretty quickly first tip cla code
+is a CLI so all the things that you're
+used to doing with other bashbased CLIs
+you can probably do with cloud code for
+instance you can pass in command line
+arguments which will be run on startup
+you can use -p to run it in headless
+mode you can chain it with other command
+line tools you can pipe data into it you
+can run multiple instances of it at once
+you can actually have cloud code launch
+instances of claude code in fact anytime
+you ask it to spin up a sub agent or
+anytime you see task that's exactly what
+clog code is doing next category images
+you can use an image simply by dragging
+it in to the terminal on OSX you can use
+shift command control 4 to copy the
+screenshot and then use controlV to
+paste it into claude that's controlV not
+commandV like you're used to there's two
+ways that you might find yourself using
+images a lot the first is mockups you
+can design a mockup paste the mockup
+into Claude and then ask it to build
+that interface second you can use images
+to close the feedback loop with Claude
+ask it to build something open up what
+it built and then take a screenshot feed
+that back into Claude and it's pretty
+good at iterating when you're giving it
+feedback now that's a manual process for
+taking images you can also automate the
+screenshotting by using the Puppeteer
+MCP server which is pretty easy to set
+up and run locally then you can ask
+Claude to use Puppeteer to go open up
+the app take a screenshot of it and it
+can save those screenshots to your local
+directory speaking of MCP service Cloud
+Code can function as both an MCP server
+and an MCP client so that means that you
+can actually turn clogged code into an
+MCP server that can then be used by
+other agents there's a whole bunch of
+MCP servers that you could use it would
+be a whole video on its own just to go
+through some of the most popular ones so
+we'll just hit a couple for instance you
+might find it useful to use the Postgres
+server to hook up Cloud Code directly to
+your database you can use MCP servers
+that are effectively wrappers around
+APIs other dev tool companies like
+Cloudflare are using their MCP servers
+to provide up-to-date documentation to
+Claude not all dev tool companies are
+making their docs available via MCP just
+yet so if you just paste in a link
+Claude code can fetch that URL and then
+use those docs to build against you
+might also want to use fetch URLs to
+retrieve knowledge from the world that
+you use in your app for instance I built
+a game for my four-year-old daughter
+that was uh Bluey Uno instead of trying
+to describe the rules myself or relying
+on the training data for Uno rules I
+pasted in
+unorules.com and had Claude code the
+gaming logic based on what it read there
+next category claude.mmd this is
+actually the first pro tip that's
+mentioned in Boris's post a claw.md is a
+prompt that is loaded with every request
+that you make to claude code this might
+include instructions for your project
+such as common bash commands to use
+style guidelines linting guidelines how
+to run your tests repository etiquette
+if you type /init after you launch
+claude in a directory it will create
+this claude md file for you after
+scanning the directory and summarizing
+its structure if as you're coding you
+want to add instructions to the cloud.MD
+you can use the hash sign you can also
+set a global cloud md in your home
+directory/cloud this will be loaded
+anytime that you're using cloud code
+across any project you can also add a
+cloud.md file in subdirectories you
+should also refactor your cla.md files
+often so it's common for them to grow in
+complexity as you continue to work on a
+project but remember that this is a
+prompt that is being loaded on every
+turn of conversation with clawed code
+and these models do much better the more
+specific you are so you don't want this
+to be crammed with a bunch of
+duplicative extraneous information you
+can use Anthropic's prompt optimizer
+tool to help you write better cla.md
+files slash commands you can define
+these in
+thecloud/comands folder and they're just
+prompts so for instance here's one
+mentioned in Boris's post about solving
+GitHub issues you might write a slash
+command for refactoring you might write
+a slash command for linting you might
+write a slash command for reviewing a PR
+slash commands are prompt templates so
+you can pass command line arguments when
+you run the slash command that will then
+be interpolated into the prompt
+template couple of UI tips one you can
+use tab to complete files and
+directories cloud code does better the
+more specific you are so if you can
+actually let it know what files or what
+directories to work with you'll
+generally get better results hit escape
+often i know that I when I started was
+hesitant to interrupt Claude when I saw
+it going off path but you will find your
+sessions go so much better if you just
+stop Claude as soon as you see it go in
+the wrong direction you can hit escape
+and ask it to undo its work from the
+previous turn and that will help you go
+back as well speaking of undoing
+Claude's work I think the biggest
+failure mode here when working with
+Cloud Code is you use it to build a
+project you get that project to a place
+where it's working really well and then
+it gets overly ambitious does a bit too
+much makes breaking changes and then you
+have a hard time rolling them back and
+the easiest way to mitigate this failure
+state is to use Cloud Code in
+conjunction with version control ask
+Cloud Code to commit after every major
+change have Claude Code write your
+commit messages there's a good chance
+they'll be the best commit messages that
+have ever been submitted to a repository
+that you own when working with Claude
+code revert more often than what you're
+used to often times the best way to fix
+things is just to clear out the
+conversation history in Claude revert
+back to a previous save point and try
+again with slightly more specific
+instructions install the GitHub CLI and
+it will use this for all of its
+interactions with GitHub if for some
+reason you don't want to install this
+tool you can also interact with GitHub
+via the GitHub MCP server you can have
+Cloud Code file PRs for you you can have
+Claude Code do code reviews on those PRs
+managing context can certainly be a bit
+of a challenge when working with Claude
+Code you want to always keep an eye on
+the auto compacting indicator you always
+want to know about how long you have
+until Claude autoco compacts prematurely
+compact when you're at natural break
+points so if you see you're 35% of the
+way to autoco compacting and you just
+finished up a task you just made a
+commit you might just want to go ahead
+compact right there and start the next
+task with all of the tokens available to
+you also consider often clearing instead
+of compacting work in such a way that
+you can use claude code with fresh
+memory one way to do this is to tell
+Claude to use scratchpads to plan its
+work alternative to Scratchpads you can
+use GitHub issues if you are paying per
+token then you're going to really want
+to monitor that uh context window usage
+and you're going to want to use external
+memory as much as possible if you're
+looking for more robust cost tracking
+across a team for instance one way to
+achieve that is by using Cloud Code's
+open telemetry support so for instance
+you could hook up Claude Code to Data
+Dog and produce dashboards that look
+like this and for more details on this
+you should check out Martin AMP's blog
+post which is linked in the description
+but in my opinion the best way to manage
+your cost is just to upgrade to one of
+those Claude Max plans at either $100 or
+$200 i'm on the $100 plan i spent about
+$150 worth of Claude Code tokens over
+the course of about 3 days if there's a
+common complaint of Claude Code it is
+it's very expensive so I was very
+excited to see Claude Code use bundled
+in with Claude Max i don't even know if
+I got through half of the pro tips that
+are included in this post if you want to
+learn more uh check out this excellent
+post here by Boris and check out some of
+the other links that I left below in the
+description
+
