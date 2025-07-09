@@ -161,7 +161,7 @@ class SmartMCPServer:
         print(result)
         
         # Check if it contains expected elements
-        expected = ["Search Test Results", "semantic search is working", "Next steps"]
+        expected = ["Search Test Results", "Semantic search is working", "Next steps"]
         success = all(exp in result for exp in expected)
         
         if success:
