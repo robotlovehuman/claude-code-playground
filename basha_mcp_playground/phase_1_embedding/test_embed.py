@@ -20,7 +20,7 @@ load_dotenv(env_path)
 # Configure OpenAI
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
-def get_embedding(text: str, model="text-embedding-3-small") -> list[float]:
+def get_embedding(text: str, model="text-embedding-3-large") -> list[float]:
     """Get embedding for a single text using OpenAI API"""
     try:
         start_time = time.time()
@@ -70,7 +70,7 @@ def test_basic_embeddings():
     
     if embeddings:
         first_word = list(embeddings.keys())[0]
-        expected_dims = 1536  # text-embedding-3-small
+        expected_dims = 3072  # text-embedding-3-large
         actual_dims = embeddings[first_word]["dimensions"]
         
         print(f"Expected dimensions: {expected_dims}")
