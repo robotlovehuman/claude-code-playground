@@ -1,0 +1,11 @@
+{
+  "name": "test-mcp-server",
+  "version": "0.1.0",
+  "description": "Simple test MCP server for Phase 3",
+  "main": "test_mcp_basic.py",
+  "tools": {
+    "test_tool": {
+      "description": "A simple test tool that returns a greeting"
+    }
+  }
+}
