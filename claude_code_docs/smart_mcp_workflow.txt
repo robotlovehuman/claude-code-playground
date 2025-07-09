@@ -1,0 +1,616 @@
+as you know MCP servers let you build
+tools for everything mcp servers are one
+of the three most important innovations
+for evolving your engineering from AI
+coding to a gentic coding with new
+models like Claude 4 and the brand new
+Deepseek
+R1.1 we have more intelligence to build
+than ever before but the models are no
+longer the limiting factor for your
+engineering output that forces us to ask
+what's limiting us as engineers from
+creating more value faster than ever
+it's our abilities to create
+capabilities for our agentic coding
+tools like clawed code that brings us
+full circle back to MCP servers in this
+video we're going to understand the most
+underutilized capability of MCP servers
+most engineers stop at tools but once
+you understand this one simple idea
+you'll be able to craft rich MCP servers
+that dramatically increase your
+engineering velocity as well as your
+teams resources tools and props and the
+tier list in reverse order of capability
+we have resources tools and prompts most
+engineers skip resources they go all in
+on tools and completely miss out on the
+highest leverage primitive of MCP
+servers props tool calling is just the
+beginning of your MCP server let me show
+you how to maximize the value of your
+MCP servers
+MCP Maxing - Resources, Tools, Prompts
+if we type /mptcp you can see I have six
+MCP servers available we're going to be
+operating in the quick data MCP server
+quick data gives your agent arbitrary
+data analysis capabilities
+onJSON and CSV files we all know how
+tools work but let's run a few to
+understand the quick data MCP server and
+showcase how limited tool calls really
+are if we type /model we're going to run
+this sonnet 4 fast workhorse model for
+this so right away we have a problem i
+have no idea what I can do with this MCP
+server i have to rely on some type of
+documentation let's open up cursor and
+break open the readme if we scroll down
+here I have a complete documented set of
+all the tools resources and prompts
+available for this MCP server let's just
+start with a couple simple ones i'll run
+this load data set and now we need to
+pass in ajson or a CSV file i'll go back
+to cursor if I search for e-commerce
+orders you can see we have this simple
+JSON list i'll copy the reference to
+this file with command shift R then I'll
+hop back to cloud code paste this in and
+have it load all right so as expected we
+have this load data set MCP server tool
+it has the file path and the data set
+name e-commerce orders this looks great
+we'll go ahead and accept this and you
+can see our JSON response if we hit
+control-R you can see the entire thing
+columns rows data set name looks great
+so let's go ahead and get a data set
+breakdown so I'll paste this also
+accepts the data set name so go ahead
+copy and paste this back in and now
+we're just going to get some basic
+information about this data set we'll of
+course accept this tool call and you can
+see we have the shape and key
+information about this data set so so
+far this looks great let's run a couple
+more tools and then we're going to
+uplevel everything we're doing by
+looking at the most powerful capability
+you can add to your MCP server let's run
+suggest analysis paste and then I'll
+just say ecom dot dot dot this is going
+to be autocompleted for us based on the
+current context there it is suggest
+analysis let's see what we get so we
+have a couple of ideas given to us based
+on that tool call run command number one
+fire this off we're now going to get a
+segment breakdown by this product
+category column so check this out we
+have product category segmentation we
+can see that electronics are producing a
+lot of value inside of this e-commerce
+orders.json file so looking at this data
+from a business strategy perspective we
+could if we wanted to cut down on sports
+and home garden product categories and
+go all in on electronics based on this
+insight okay so there's one more cool
+tool I want to share with you here if we
+scroll down to the bottom we can execute
+arbitrary code we can have clawed code
+running on claude for sonnet execute
+arbitrary code for us so again we can
+just come back in here paste we can say
+ecom dot dot dot and let's find out the
+if we look at the data set here we have
+this region column and we also have
+order value so let's find out the top
+order value by region find top three
+region order value yep let's go ahead
+and fire that off there we go so you can
+see here we have custom code getting
+written based on our prompt we'll hit
+yes and there is our executed code
+response you can see here our top three
+regions by order volume we have East
+Coast West Coast and of course Midwest
+and last place pretty accurate training
+data set right if we want to reuse that
+same MCP tool call we can hit up and
+then I'll say then create a pie chart
+label by region value and percent it's
+going to create a pie chart for us let's
+go ahead and run this and bam check this
+out you can see we have East Coast we
+have West Coast Midwest and then the
+South we have a great breakdown here and
+this was all just quickly created and
+managed with our MCP server for quick
+data analytics against JSON and CSV so
+tools are great we all know about their
+capabilities we can build out tools for
+anything and tools for everything but
+tools only scratch the surface of what
+you can do with your MCP server to
+unlock the full capabilities of what you
+can do we need to build MCP server
+MCP Server Prompts
+prompts so in order to showcase the
+capabilities here we're going to reset
+this cloud code instance and really
+start from scratch so let's open up
+cloud again we'll run the same setup so
+you can see here
+/mcp/mod same deal sonnet 4 so now
+instead of looking through the
+documentation right we had this readme
+that thankfully detailed all of our
+tools resources and prompts right
+there's the codebase structure we'll
+take a look at that in a second instead
+of doing any of this instead of you know
+relying on codebase architecture
+codebase structure we can just use MCP
+server prompts to guide the entire
+discovery and use of the quick data MCP
+server let me show you exactly what I
+mean to find all the prompts associated
+with this MCP server inside of cloud
+code we can type
+/quick- data so this is the name of the
+MCP server and here you can see a ton of
+autocomplete suggestions with prompts so
+these are prompts built out in the MCP
+server now we're going to run something
+really cool something very useful that I
+highly recommend you set up inside of
+all your MCP servers we're going to list
+available MCP server capabilities
+including prompts tools and resources so
+this is a prompt that's going to give us
+a clear breakdown of what we can do with
+this tool okay check this out so Claude
+Code our agentic coding tool has now
+consumed everything that we can do with
+this tool it's now loaded fresh in the
+context window and we have a quick start
+flow to get started so now if we want to
+we can just ask cloud code what exactly
+these heat components are okay so I'm
+just going to say tools list as bullets
+all right so check this out so now we
+can just you know query our agent right
+here are the prompts here are the tools
+this is everything that we saw before
+let's go ahead and continue firing off
+these prompts to really understand what
+they can do for us all right so if we
+type slashfind you can see we have
+another prompt find data sources prompts
+this is going to discover available data
+files in the current directory and
+present them as load options now see how
+much more helpful these prompts are than
+just having tools hidden somewhere i'm
+going to hit tab you can see here we
+have an argument the directory path i'll
+just hit dot for that and fire that off
+so this is going to automatically
+discover all
+available.json and CSV files for our
+quick data MCP server so we had a prompt
+also known as an agentic workflow do
+this work for us automatically you can
+see we also have take note of this this
+is really important ready to load with
+load data set commands so with the
+previous prompt and this prompt you can
+see every prompt we're running we're
+getting a suggestion or a for direction
+or a next step for what we can do with
+this MTP server so what I'm going to do
+here is just type load ecom so I have a
+really tight information dense keyword
+prompt literally just two words with the
+current context that we have set up
+thanks to our prompts and thanks to claw
+code running on claude for sonnet I can
+be nearly 100% sure that this is going
+to run the right tool with the right
+information okay and so I'll kick this
+off and notice how I just you know ran
+through the big three of AI coding
+context model prompt these never go away
+that's why they're a principle of AI
+coding they're always there whether you
+realize it or not the more you can look
+and think from your agents perspective
+with the current available context model
+and prompt the more you'll be able to
+hand off tons and tons of engineering
+work which in the end results in your
+engineering velocity increase so check
+this out so we have the file path here
+using the full absolute path looks great
+and then we have the data set name okay
+with just typing slash with just working
+through a few pre-existing prompts we're
+moving a lot faster than if we were
+looking through you know the
+documentation going back and forth and
+back and forth and that is a really
+important thing to call out here right
+we haven't left the terminal we haven't
+left cloud code we're focused we're
+moving quickly and we're operating
+inside of this MCP server with minimal
+information okay okay so we have that
+data set loaded if we scroll back up
+you'll remember here at the top that we
+were given a concrete workflow you can
+see uh find data set to discover data
+files and then we can run load data set
+and then explore data so let's go ahead
+and run that i'm going to type slash
+first this is our first look MCP prompt
+i'll hit tab and you can see there the
+arguments are data set name i'll go
+ahead and just type ecom dot dot dot and
+we should get auto completion there okay
+there we go so this prompt and we're
+going to take a look at the individual
+prompts in a second is kicking off one
+or more tools okay so we'll go ahead and
+fire that off and based on that prompt
+right and based on the information
+returned by this tool we're getting a
+nice breakdown of a sample of this data
+set size columns sample data looks great
+you can see there we actually did get a
+sample if we hit control-R it broke down
+you know pieces of our data so that
+looks great thanks to the existing
+context window that all of these prompts
+have been giving our agent we can just
+type something like this how can we
+further explore this
+data okay so check this out from the
+existing context window we have you know
+tons of ideas of how we can keep pushing
+this and this is really useful for when
+you're operating outside of your MCP
+server obviously if you're building your
+MCP server you have access to the actual
+code and you can just kind of you know
+have your agent run through this but
+when we're operating in this when we're
+handing off our MCP server to our team
+to our engineering team and when we're
+exposing our MCP servers to the public
+we want it easy to use we want it to be
+quickly consumable and we want these
+guided workflows okay prompts are really
+important because they can return entire
+sets of information to your agent and
+they can provide next steps you keep
+pushing yourself you can keep pushing
+engineers on your team and pushing the
+agent in the right direction for your
+domain specific problem set let's go
+ahead let's run another prompt so we can
+do slashquick data to see all of our
+prompts let's go ahead and run the
+correlation investigation prompt so this
+is going to find correlations inside of
+our data set we'll of course type ecom
+dot dot dot and before we run this let
+me show you exactly what these prompts
+look like inside of the MCP server so
+we'll open up cursor and we're just
+going to search for that prompt notice
+how I just have a single method inside
+of this file and since we're here let's
+talk about codebase architecture this is
+important so I have the codebase
+embedded in its own directory here and
+on top you can see the three essential
+directories for Aenta coding and you can
+see our trees directory for multi- aent
+parallel AI coding check out the
+previous video to see how we parallelize
+cloud code into multiple trees to get
+work done at the same time but if we
+click into architecture modular and we
+take a look at the architecture here you
+can see we have our data there then we
+have source MCP server and we have the
+primitives of the MCP server right tools
+resources and prompts if we open up
+prompts we can see our correlation
+investigation prompt here inside of the
+single function these are all single
+function Python files to keep everything
+nice and isolated and easily testable so
+if we hop up to this file we can see
+something really cool we're passing in
+the data set name and then we're just
+running arbitrary code which is
+effectively our agentic workflow so you
+can do anything you want here the most
+important thing is to gather some type
+of prompt response and then return that
+back to your agent right this is what's
+going to get passed right back into the
+agent so you can see we have lots of
+detail on the correlation investigation
+a couple of branches of logic here a
+loop and you can see we're loading that
+schema out of our existing data set so
+let's go ahead let's run this this is
+going to run a really great analysis on
+our data set okay so we're going to
+close that let's run this so this prompt
+is kicking off a tool call and this is
+super important inside of your prompts
+you can kick off one or more tool calls
+you can see here how the prompt allows
+you to compose sequences of tool calls
+very very quickly using a custom slash
+command here okay so quick commands to
+start you can see that we're picking
+this up automatically this is getting
+returned into the context window and now
+cloud code running on cloud 4 wants to
+kick this off for us based on this
+prompt okay so of course we'll hit yes
+and you can see there we're getting some
+concrete feedback okay we need at least
+two numerical columns for correlation
+analysis okay so we can go ahead and
+kick this off this is going to reexpose
+information back into our agent so
+e-commerce orders cannot run this okay
+so our tools are giving us feedback all
+guided by our prompt let's go ahead and
+load some more data right we can very
+quickly thanks to our slash command just
+run /find and let's go ahead and find
+those other data sources that we have
+i'll specify the directory here dot and
+this is going to reload all of our data
+sources and so you can see here we can
+load these two additional data sources
+let's go ahead and load these so I'm
+just going to say load all so now we're
+going to get those two prompts there's
+our employee survey data set and here's
+our product performance data set we'll
+hit yes yes now you have multiple
+numerical columns cross data sets for
+correlation analysis okay so I'll just
+say run analysis on employee
+product okay so there it is there's that
+find correlation lookup and you can see
+here it's queued up several calls
+several tool calls that we can now kick
+off so this is one way to you know
+activate this workflow that's great i'm
+going to hit escape here and I'm going
+to reuse the slash command that we were
+we were going for so I'm going to type
+slash um correlation investigation
+prompt looks great and then I'll pass in
+let's use our employee survey so I'll
+paste that in and let's run the
+investigation prompt here this should
+kick off a similar workflow there it is
+so this prompt is exposing the potential
+columns that we can correlate so I'm
+going to go ahead i want to kick off
+this first flow that was revealed by
+this prompt super simple it's a slash
+command that's exposed by our MCP server
+prompts that we just pass in one
+variable to work with okay so go ahead
+and type uh run option one okay so this
+should pop up find correlations there it
+is let's fire off our correlations and
+let's see what we get here so check this
+out strong correlation found we have
+satisfaction score correlated with
+tenure years all right so if we open up
+this data set just to take a look at
+this you can see several columns so you
+can see here tenure year satisfaction
+score simple CSV file and this prompt
+and the tools called by the prompt found
+this strong correlation okay so there's
+a strong positive correlation between
+satisfaction score and tenure year that
+means employees with high satisfaction
+scores tend to have longer tenure and so
+this reveals you know not to get too
+specific into the weeds of this MCP
+server but this is important because
+it's going to immediately reveal to us
+that satisfaction and retention are
+closely linked satisfied employees stay
+longer not a mind-blowing revelation but
+this could be anything inside of your
+data set okay I'm just I'm just putting
+together a small concise example that we
+can you know discuss to showcase the
+power of these MCP server prompts okay
+do you want to visualize this with
+option two i'll I'll say go ahead and
+we'll just continue walking through
+create chart let's go and fire that off
+we now have an additional chart set up
+here we can open this up so we can copy
+this file path here if we go into HTML
+preview mode we can see this chart
+generated if you average these out over
+the satisfaction score you can see we
+have a pretty strong correlation here
+between tenure and satisfaction score so
+very powerful stuff so what does this
+all mean right why are prompts inside of
+your MCP server so important right away
+by using this MCP server we were able to
+move a lot faster if we close Claude
+here reopen it and we type
+/assets we can get our agent back up and
+running with this MCP server very
+quickly okay so prompts let you quickly
+set up your agent with everything they
+need to know to operate your MCP server
+so this is just one simple way you can
+use MCP server prompts check this out
+and we can look at this exact prompt
+right this is the list MCP assets prompt
+so check this out look how simple this
+is this is quite literally just
+returning essential information about
+this MCP server in a custom way to our
+agent this prompt primes both your
+memory and your agents memory with
+everything it needs to know about your
+MCP server every MCP server I build out
+now has some type of prompt just like
+this so now everything is exposed we can
+quickly see and operate on things in a
+much faster way we can always type
+/quick dash and start understanding our
+data sets right so you know we then ran
+our find and we passed in dot prompts
+allow us to prime our agent in powerful
+ways and run arbitrary clawed code tools
+so inside of the find data sources
+prompt again we can just search this
+i've isolated everything into its own
+file this is another great pattern I
+highly recommend you follow we have our
+find data sources prompt which is
+running arbitrary code principal AI
+coding members know this as an ADW AI
+developer workflow that's all these
+prompts are they're endtoend chains of
+prompts and code coupled together that
+end up in a simple string return value
+so after we scan all the directories we
+do something really powerful we in
+multiple use cases in multiple scenarios
+we offer the agent suggestions this is
+really really powerful our agent is
+ready for the next step right it wants
+this load data set uh command so this
+time around you know this is an agent
+it's powerful it's got the new cloud for
+model we can just load all data
+sets okay so there's three prompts
+instead of one right we can move a lot
+faster thanks to the prompt okay so we
+can load bam bam bam now we have all
+three data sets loaded fantastic and now
+we can run you know our data set first
+look if we wanted to we can continue
+down that line that we were running
+before slash data set first look you
+know this is just you know two or three
+of many prompts that we have here
+there's really no limit to what you can
+do with your prompts inside of your MCP
+server so we have prompts resources and
+tools cloud code does not support
+resources if we open up the example
+clients and search cloud code you can
+see here that you know cloud code does
+not have resource support but it has the
+two that really matter prompts and tools
+you can also substitute your resources
+for just specific tool calls i've done
+that inside this codebase you can check
+that out if you're interested but
+recentering on the key idea here why do
+we create prompts because prompts allow
+us to create agentic workflows they
+allow us to compose our tools tools are
+individual actions here's our load data
+set tool and you can see it just does
+one thing right it takes one action it
+loads the data set into memory tools are
+individual actions prompts are recipes
+for repeat solutions this is the big
+difference your prompts have three
+massive advantages that your tools don't
+have you can with cloud code reference
+all of your prompts in a clean detailed
+way very quickly okay so no more
+guessing so you can quickly get up and
+running with whatever MCP server you
+have so second your prompts can compose
+tools in your MCP server together okay
+this is super super powerful you saw
+multiple times here our prompt was then
+kicking off individual tools that exists
+underneath the prompts right that's why
+we have this tier list order of
+capability prompts greater than tools
+greater than resources and lastly a
+super super underutilized element of
+prompts is that you can guide the
+experience at the end our agent is
+saying "Use data set first look to
+explore any data set." So our agent
+through the prompt that was run here
+right if we scroll up here we have find
+data resources prompt it triggered a
+whole slew of not just a sequence of
+tools but also a guide and a direction
+for you the engineer operating the tool
+and more importantly every single day
+it's giving our agent the next steps
+okay so load data set load data set load
+data set and then we can just you know
+very quickly very calmly say things like
+this load all data sets and then
+continue down the line of data
+exploration or running whatever other
+tools or prompts our MCP server exposes
+to us with prompts you can build out
+high quality MCP servers that do more
+than just call tools tool calling is
+just the beginning tools are the
+primitives of MCP servers not the end
+state you want to end up with prompts
+right prompts represent end-to-end
+developer workflows that are truly
+agentic workflows or as I like to call
+them AI developer workflows right they
+are quite literally doing developer work
+that you would do but it's powered of
+course by Gen AI you really want to be
+thinking about MCP servers as a way to
+solve a domain specific problem in an
+automated fashion with repeat solutions
+embedded inside of the prompts the
+prompt is what the tools scale into this
+codebase is linked in the description to
+give you a concrete example of how you
+can use prompts inside your MCP servers
+come in here play with it cd into this
+folder name i'll probably change this by
+the time you see it and you'll be able
+to quickly boot up Cloud Code with this
+MCP.json file here if you made it to the
+end like comment to let the YouTube
+algorithm know you want more hands-on
+engineering information like this you
+know where to find me every Monday stay
+focused and keep building
