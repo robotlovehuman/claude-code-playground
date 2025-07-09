@@ -2,18 +2,12 @@
 """
 Phase 3: Basic MCP Server Test
 Goal: Create simplest possible MCP server with one tool
-Test: Server responds to "test_tool" with "Hello from MCP"
+Test: Tool returns "Hello from MCP"
 """
 
 import json
 import sys
-import asyncio
-from typing import Any, Dict
-import logging
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(message)s')
-logger = logging.getLogger(__name__)
+from typing import Dict, Any
 
 class SimpleMCPServer:
     """Minimal MCP server implementation"""
@@ -22,7 +16,7 @@ class SimpleMCPServer:
         self.tools = {
             "test_tool": {
                 "description": "A simple test tool that returns a greeting",
-                "inputSchema": {
+                "parameters": {
                     "type": "object",
                     "properties": {},
                     "required": []
@@ -30,151 +24,149 @@ class SimpleMCPServer:
             }
         }
     
-    async def handle_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle incoming JSON-RPC request"""
-        method = request.get("method")
-        request_id = request.get("id", 1)
-        
-        logger.info(f"Received request: {method}")
-        
-        if method == "initialize":
-            return self.create_response(request_id, {
-                "protocolVersion": "1.0",
+    def handle_initialize(self, request: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle initialization request"""
+        return {
+            "jsonrpc": "2.0",
+            "id": request.get("id"),
+            "result": {
+                "protocolVersion": "2024-11-05",
                 "serverInfo": {
                     "name": "test-mcp-server",
                     "version": "0.1.0"
                 },
                 "capabilities": {
-                    "tools": {}
+                    "tools": {"listChanged": False}
                 }
-            })
-        
-        elif method == "tools/list":
-            return self.create_response(request_id, {
+            }
+        }
+    
+    def handle_tools_list(self, request: Dict[str, Any]) -> Dict[str, Any]:
+        """List available tools"""
+        return {
+            "jsonrpc": "2.0",
+            "id": request.get("id"),
+            "result": {
                 "tools": [
                     {
                         "name": name,
                         "description": info["description"],
-                        "inputSchema": info["inputSchema"]
+                        "inputSchema": info["parameters"]
                     }
                     for name, info in self.tools.items()
                 ]
-            })
-        
-        elif method == "tools/call":
-            params = request.get("params", {})
-            tool_name = params.get("name")
-            
-            if tool_name == "test_tool":
-                return self.create_response(request_id, {
-                    "result": {
-                        "message": "Hello from MCP! 🎉",
-                        "status": "success",
-                        "details": "MCP server is working correctly"
-                    }
-                })
-            else:
-                return self.create_error(request_id, -32602, f"Unknown tool: {tool_name}")
-        
-        else:
-            return self.create_error(request_id, -32601, f"Method not found: {method}")
-    
-    def create_response(self, request_id: Any, result: Any) -> Dict[str, Any]:
-        """Create JSON-RPC response"""
-        return {
-            "jsonrpc": "2.0",
-            "id": request_id,
-            "result": result
-        }
-    
-    def create_error(self, request_id: Any, code: int, message: str) -> Dict[str, Any]:
-        """Create JSON-RPC error response"""
-        return {
-            "jsonrpc": "2.0",
-            "id": request_id,
-            "error": {
-                "code": code,
-                "message": message
             }
         }
     
-    async def run(self):
+    def handle_tool_call(self, request: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle tool execution"""
+        tool_name = request["params"]["name"]
+        
+        if tool_name == "test_tool":
+            return {
+                "jsonrpc": "2.0",
+                "id": request.get("id"),
+                "result": {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Hello from MCP! 🎉"
+                        }
+                    ]
+                }
+            }
+        
+        # Tool not found
+        return {
+            "jsonrpc": "2.0",
+            "id": request.get("id"),
+            "error": {
+                "code": -32601,
+                "message": f"Tool not found: {tool_name}"
+            }
+        }
+    
+    def handle_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
+        """Route requests to appropriate handlers"""
+        method = request.get("method")
+        
+        handlers = {
+            "initialize": self.handle_initialize,
+            "tools/list": self.handle_tools_list,
+            "tools/call": self.handle_tool_call
+        }
+        
+        handler = handlers.get(method)
+        if handler:
+            return handler(request)
+        
+        return {
+            "jsonrpc": "2.0",
+            "id": request.get("id"),
+            "error": {
+                "code": -32601,
+                "message": f"Method not found: {method}"
+            }
+        }
+    
+    def run(self):
         """Run the MCP server"""
-        logger.info("Starting Simple MCP Server...")
-        logger.info("Available tools: test_tool")
+        print("=== Phase 3: Basic MCP Server Test ===\n", file=sys.stderr)
+        print("Server starting...", file=sys.stderr)
         
-        reader, writer = await asyncio.open_connection(None, None)
+        # Simple test mode - simulate a tool call
+        if "--test" in sys.argv:
+            print("Running in test mode\n", file=sys.stderr)
+            
+            # Test initialize
+            init_request = {"jsonrpc": "2.0", "method": "initialize", "id": 1}
+            init_response = self.handle_request(init_request)
+            print(f"Initialize response: {json.dumps(init_response, indent=2)}\n", file=sys.stderr)
+            
+            # Test tools list
+            list_request = {"jsonrpc": "2.0", "method": "tools/list", "id": 2}
+            list_response = self.handle_request(list_request)
+            print(f"Tools list: {json.dumps(list_response, indent=2)}\n", file=sys.stderr)
+            
+            # Test tool call
+            call_request = {
+                "jsonrpc": "2.0",
+                "method": "tools/call",
+                "id": 3,
+                "params": {"name": "test_tool", "arguments": {}}
+            }
+            call_response = self.handle_request(call_request)
+            print(f"Tool call response: {json.dumps(call_response, indent=2)}\n", file=sys.stderr)
+            
+            result = call_response.get("result", {}).get("content", [{}])[0].get("text", "")
+            if "Hello from MCP" in result:
+                print("✅ Phase 3 PASSED: MCP server responds correctly!", file=sys.stderr)
+                return True
+            else:
+                print("❌ Phase 3 FAILED: Unexpected response", file=sys.stderr)
+                return False
         
-        try:
-            while True:
-                # Read request from stdin
-                line = await reader.readline()
+        # Normal server mode - read from stdin
+        while True:
+            try:
+                line = sys.stdin.readline()
                 if not line:
                     break
                 
-                try:
-                    request = json.loads(line.decode())
-                    response = await self.handle_request(request)
-                    
-                    # Write response to stdout
-                    writer.write(json.dumps(response).encode() + b'\n')
-                    await writer.drain()
-                    
-                except json.JSONDecodeError:
-                    logger.error("Invalid JSON received")
-                except Exception as e:
-                    logger.error(f"Error handling request: {e}")
-        
-        finally:
-            writer.close()
-            await writer.wait_closed()
-
-def test_server_locally():
-    """Test the server with a simple request"""
-    print("=== Phase 3: MCP Server Test ===\n")
-    
-    server = SimpleMCPServer()
-    
-    # Test requests
-    test_requests = [
-        {"jsonrpc": "2.0", "id": 1, "method": "initialize"},
-        {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
-        {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "test_tool"}}
-    ]
-    
-    async def run_tests():
-        for req in test_requests:
-            print(f"Testing: {req['method']}")
-            response = await server.handle_request(req)
-            print(f"Response: {json.dumps(response, indent=2)}\n")
-            
-            # Verify response
-            if "error" in response:
-                return False
-            if req["method"] == "tools/call" and "Hello from MCP" not in str(response):
-                return False
-        
-        return True
-    
-    # Run tests
-    success = asyncio.run(run_tests())
-    
-    if success:
-        print("✅ All MCP server tests passed!")
-        return True
-    else:
-        print("❌ MCP server test failed")
-        return False
+                request = json.loads(line)
+                response = self.handle_request(request)
+                print(json.dumps(response))
+                sys.stdout.flush()
+                
+            except json.JSONDecodeError:
+                continue
+            except KeyboardInterrupt:
+                break
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == "--test":
-        # Run local test
-        success = test_server_locally()
+    server = SimpleMCPServer()
+    if "--test" in sys.argv:
+        success = server.run()
         sys.exit(0 if success else 1)
     else:
-        # Run as MCP server
-        server = SimpleMCPServer()
-        try:
-            asyncio.run(server.run())
-        except KeyboardInterrupt:
-            logger.info("Server stopped")
+        server.run()
