@@ -1,0 +1,8 @@
+ALWAYS run this INSTNATLY all our pips are instaled in this specific exact path:
+
+echo $CONDA_PREFIX
+
+/opt/homebrew/Caskroom/miniconda/base/envs/ai_stuff
+
+
+
