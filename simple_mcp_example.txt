@@ -1,0 +1,145 @@
+Hi!
+
+I'm an AI assistant trained on documentation, help articles, and other content.
+
+Ask me anything about Claude.
+
+what is the like minimal way to set up mcp with claude code
+The minimal way to set up MCP with Claude Code is to add an MCP server using the basic command syntax1:
+
+bash
+claude mcp add <name> <command> [args...]
+1
+
+For example, to add a local server1:
+
+bash
+claude mcp add my-server -e API_KEY=123 -- /path/to/server arg1 arg2
+1
+
+After adding the server, you can verify it was configured correctly1:
+
+bash
+claude mcp list
+1
+
+You can also check the server status anytime using the /mcp command within Claude Code1.
+
+For remote servers, the setup is even simpler since they require no local installation - just add the vendor's URL2:
+
+bash
+claude mcp add --transport sse sse-server https://example.com/sse-endpoint
+1
+
+The server will be available in local scope by default, meaning it's only accessible to you in the current project1.
+
+Sources
+DocsClaude CodeBuild with Claude
+Model Context Protocol (MCP)
+Home
+Remote MCP support in Claude Code \ Anthropic
+and do we need to create like a file to make sure or does it appear in a specifc config somewhere or what?
+No, you don't need to create a file manually. The configuration is automatically stored based on the scope you choose1:
+
+Local scope (default): Stored in your project-specific user settings1
+
+Project scope: Creates or updates a .mcp.json file at your project's root directory1. When you add a project-scoped server, Claude Code automatically creates this file with the configuration structure1:
+
+bash
+claude mcp add shared-server -s project /path/to/server
+1
+
+This creates a .mcp.json file that follows this format1:
+
+json
+{
+  "mcpServers": {
+    "shared-server": {
+      "command": "/path/to/server",
+      "args": [],
+      "env": {}
+    }
+  }
+}
+1
+
+User scope: Stored in your user configuration, available across all projects1
+
+bash
+claude mcp add my-user-server -s user /path/to/server
+1
+
+You can also create an MCP configuration file manually and load it using the --mcp-config flag2:
+
+json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/path/to/allowed/files"
+      ]
+    }
+  }
+}
+2
+
+The configuration is automatically managed - you just need to add servers using the claude mcp add command and they'll be stored in the appropriate location based on your chosen scope1.
+
+Sources
+DocsClaude CodeBuild with Claude
+Model Context Protocol (MCP)
+DocsClaude CodeBuild with Claude
+Claude Code SDK
+what is a documented mcp example we can copy VERBATIM with STEPS VERBATIM i have my claude code right now opened up in vs code on my mac give me the exact step bys tep i will pass it to him he shod be able to know from A to Z exactly wht to do and wht file or config to creat eand how to test full workin SUPER SIMPLE mcp exmaple
+Based on the documentation, here's a complete step-by-step example using the Postgres MCP server1:
+
+Step 1: Add the Postgres MCP Server
+In your VS Code terminal, run this exact command1:
+
+bash
+claude mcp add postgres-server /path/to/postgres-mcp-server --connection-string "postgresql://user:pass@localhost:5432/mydb"
+1
+
+Step 2: Verify the Server Was Added
+Check that it was configured correctly1:
+
+bash
+claude mcp list
+1
+
+Step 3: Test the MCP Server
+Now you can query your database with Claude using these exact examples1:
+
+plaintext
+> describe the schema of our users table
+1
+
+plaintext
+> what are the most recent orders in the system?
+1
+
+plaintext
+> show me the relationship between customers and invoices
+1
+
+Step 4: Check Server Status
+You can check MCP server status any time using the /mcp command within Claude Code1:
+
+plaintext
+> /mcp
+1
+
+Alternative: Simple Filesystem Server Example
+For an even simpler example, here's how to add a filesystem server2:
+
+bash
+claude mcp add filesystem-server npx -y @modelcontextprotocol/server-filesystem /path/to/allowed/files
+2
+
+Then test it by asking Claude to read files in that directory.
+
+The Postgres MCP server provides read-only access for safety, and Claude can help you explore database structure and run analytical queries1. Make sure your connection string uses appropriate credentials with minimum required permissions1.
+

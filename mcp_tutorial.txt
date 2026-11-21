@@ -1,0 +1,328 @@
+TUTORIAL 1:
+we can get Claude code in MCP server
+easily they make it super easy you just
+paste in a few command lines to get
+started it's just good to just run the
+list command so we'll run claude MCP
+list and we'll see what MP and there's
+no servers configured at this time and
+so we can add the server by uh running
+MCP add and so I will do that real quick
+and here is our MCP add command pub and
+then a couple of environmental variables
+using MPX and the MP MCP server here we
+go we'll click enter and we did it so
+we've added the server it's good to go
+and now all you have to do is run claude
+and it will have it up and running for
+you and now we can ask it uh to to
+perform tasks for us so you say uh write
+a no we got to spell it write a PubNub
+app a chat app that includes presence
+indication with a green dot next to the
+the user's name that actually that
+should be enough um now what's going to
+happen is uh it's going to start
+thinking it's going to ask us to run our
+MCP server so we're going to sit here
+and we're going to watch uh it might ask
+us some questions it's going to ask us
+for more uh acknowledgements so yes we
+want it to uh run these commands and
+these is informative commands that
+allows the AI to understand how to build
+the uh the the app that we just asked it
+to build so it's going to build a chat
+app for us right so it's going to build
+an app that allows us to um chat with
+users and we'll also be able to see if
+they're online now it is getting it's
+asking me the same question quite often
+so just looking up a lot of different
+resources so we'll just ask it to not
+ask again uh and it should be a little
+more streamlined so let's uh let's see
+how it goes oh all right so go ahead and
+keep keep going all right here we go
+it's uh it's getting a little more
+information i think it knows enough now
+yeah so it knew to pull the right
+information such as the presence because
+we asked for that information we We
+wanted that feature enabled cuz we want
+that green dot next to the user's icon
+uh and their name in a list so let's see
+let's see how it goes let's see what it
+does all right now it's writing code for
+us so I'm going to say go ahead and
+continue writing without asking any more
+permissions excellent it's got the most
+up-to-date information the most latest
+SDK version oh nice it's going to write
+a read me for us oh it's done excellent
+okay let's see how it did okay so I've
+got here on the screen uh it looks like
+we've got an index html file and a
+readme uh let's go in the read me see
+what it says really quick uh realtime
+messages user press an indicator with
+the green dot for online simple clean UI
+no server required because pubn's being
+used so we just open index html and it
+should be working now I want to just
+read the code real quick so let's look
+at the code in index html so it's a full
+page app um single page here's the user
+interface we've got a chat room uh let's
+see here and it's already got my API
+keys which is great it's ready to go so
+Let's let's see what happens when we
+open
+index.html okay it's asking me to enter
+my name and let's join the chat all
+right let's say hello let's see if that
+works it works okay excellent uh now
+let's open up a new window and we will
+say this is player B we'll join and say
+oh we even see that the the original
+user is online so we say hi hi Stephen
+let's see if that works
+so I send my message and the other
+screen it says so we see hi Stephen and
+then we can say hi back and it worked
+what's great about this is I didn't have
+to write any code i didn't even have to
+edit or save a file i just asked the AI
+to do a simple task for me and now what
+I can do is I can go in and iteratively
+uh run further updates i can do more
+things i can ask it to change the colors
+i can add more features um so like for
+example I noticed that there was no
+history uh when my my user joined in so
+I can add some history um so that way
+every time I jump in to the application
+it knows what I said previously so let's
+try let's just see uh add history to the
+chat window so that we we can we want to
+we we want to be able to see
+um previous messages now it should know
+to maybe read some more docs we already
+gave it permission to read the docs so
+it might go ahead and do that and it
+should update and modify oh look at that
+it's actually already working it's doing
+what we asked it to do this is so great
+it's a very satisfying experience you
+just sit here and and you watch it code
+and it does all all the work for you
+often it's uh it's great you can ask it
+to do this task it does take a while it
+takes a little a little bit of time and
+you can go off and do another task you
+know read messages catch up on emails
+come back and it will be ready to go and
+this is it it's uh added some uh history
+messages handle messages
+
+is this helpful?
+
+
+
+TUTORIAL 2:
+okay in this video I'm going to show you
+how to connect your Cloud Pro plan to
+Cloud Code Some tips and tricks on how I
+use Cloud Code and some commands I think
+you should know And also I'm going to
+show you how to set up MCP servers A few
+months ago when Cloud Code first came
+out I did a video of how to install MCB
+servers and I actually made a bunch of
+mistakes So I want to rectify that Also
+Anthropic now allows you to use your pro
+plan towards cloud code But take that
+with a grain of salt because as we know
+the rate limits are very very tight and
+I've been feeling it recently also
+within Cloud Desktop Just to make
+everything clear your usage limits are
+shared between cloud desktop cloud web
+the cloud app and cloud code So if you
+hit the rate limits on any of them or
+you use them simultaneously you will hit
+those rate limits a lot faster If you
+haven't yet installed cloud code you go
+to docs.anthropic and you get this
+command You paste this in your terminal
+Now I already have cloud installed on my
+computer So you type in claude in the
+terminal and pops up It's also important
+for you to emphasize that you don't have
+to do this within cursor You could do
+this within any terminal Now if you
+don't have the latest version of cloud
+code you exit cloud code and you type in
+cloud update Now if you're already using
+cloud code and you're not on the max
+Switching from API to Pro Plan
+plan and you haven't yet connected the
+pro plan this is how you switch from
+your API building to your pro plan So
+you type in / status and you can see
+here the version you have and if you go
+down to account you see it's connected
+by API key So what we're going to do is
+press enter slash logout Now that we've
+logged out we want to start Claude from
+scratch And then we will choose to log
+in with our subscription So we're type
+in Claude and it's like a brand new
+installation So you choose your theme I
+like this one Dark mode colorlank
+friendly Now this is the important part
+We want to choose number one cloud
+account with subscription So you press
+enter and we just authorize our login to
+work with cloud codes I suggest turning
+on recommended settings In my last cloud
+code video I mistakenly tried to install
+MCB servers from within cloud code That
+is the incorrect way of doing that The
+correct way of doing it is in a regular
+terminal window outside of cloud code
+We're going to type in exit And now
+we're in a regular terminal Let's press
+clear and let's type in claude mcp list
+So it shows us that one mcp server
+installed for this directory So first
+let's remove that claude mcp remove
+brave-
+search That was awesome Okay So now if
+we do claude mcp list Okay So now we see
+there's no MCP servers configured Okay
+So now I'm just going to show you how to
+install a standard MCP server We're
+going to use the fetch MCP server That's
+what I used in the last video You could
+get this at the model context protocol
+GitHub page and we're going to install
+using uvx So all we really need here is
+the name the command and the argument
+MCP Server Setup (The Right Way)
+And again we're doing this in a regular
+terminal not within cloud code Okay So
+we'll do claude
+mcp add fetch uvx We'll paste in fetch
+URL Okay Okay so now let's just press
+enter And just like that it added it to
+cloud code So if we type in /mcp and
+there is the fetch MCP server we just
+added This video was sponsored by Aqua
+Voice That's how I dictated my computer
+It's actually really cool that it's able
+to use deep context look at my screen
+understand what's going on and give the
+necessary terminal commands I'll drop a
+link to Aqua in the description below
+But what I want to show you is an even
+cooler way of adding MCP servers If
+you're coming from cloud desktop I'm
+willing to bet you already have MCP
+servers installed So there's a command
+that will take your cloud desktop config
+all the MCPS you have installed in cloud
+desktop and just install them to cloud
+code So just to show you how to get to
+that command If you're in the regular
+terminal and you just type in cloudmcp
+you'll get a bunch of useful commands
+And this is the one we want Add from
+cloud desktop Okay so let's just copy
+that And again this works in any
+terminal You don't have to be using
+cursor So now let's just type this
+claude mcp and then paste in add from
+cloud desktop Press enter and it goes to
+your cloud desktop config file and sees
+your MCB servers So here I have 19 MCB
+servers installed So what you can do is
+you go up and down and decide which ones
+to install If you don't want them you
+just press space I don't need pandock
+I'm pressing space and unchecking it I
+don't need this to have notion So now
+all I do is press enter and it
+Importing from Claude Desktop
+successfully imported 12 MCB servers It
+was that easy Now I will remind you that
+cloud code adds MCB servers on a project
+level basis So now if we type in claude
+we type in /mcp we see our MCP servers
+that we have installed Now a few other
+things I want to talk about claude code
+Similar to cursor it's important to add
+rules Now cloud doesn't use cursor rules
+It uses claw.md And this could be
+created in every directory and
+subdirectory If you type slash in it
+what it does is it will initialize a new
+cloud MD file with codebase
+documentation And this will be very
+helpful for cloud code to understand
+your codebase So I recommend doing this
+right away Another thing you should know
+is that with Claude Pro and Claude Code
+the only option you have is Claude
+Sonnet 4 which is pretty good In my
+opinion Cloud Opus isn't that much
+better than Cloud Sonnet It just eats
+your tokens up a lot more It hasn't been
+significantly better than Cloud Sonnet
+That's just my experience As I mentioned
+frequently it is very expensive Two more
+commands that are really powerful within
+Cloud Code have to do with managing the
+context window And I talk about context
+window a lot Every time you converse
+with an LLM and the chat gets longer the
+Essential Claude Code Commands
+whole chat is sent back to the LLM So to
+mitigate your context window with cloud
+code I recommend starting new chats Now
+you can do this easily by doing
+slashclear It'll clear up the whole
+conversation free up memory But if you
+don't want to lose all the context you
+could also do slash compact and it'll
+make a summary of your conversation
+clear the rest of the conversation give
+you an almost fresh chat And you could
+also give it specific commands like
+remember my superbase config So
+slashclear and slco compact are your
+friends here If you type in slashcost to
+figure out how much you spent it says no
+need to monitor cost Kind of annoying
+because you want to know how you're
+doing with tokens And by the way there's
+a really great YouTube channel Indie Dev
+Dan He talks a lot about cloud code I
+suggest checking him out I'll link to
+him above Cloud Code is a rabbit hole It
+is in my opinion the best agentic coding
+platform It's just expensive It's really
+cool that one it's integrated now with
+Cursor Two Cursor got a bunch of updates
+Three that it's included in the pro plan
+But keep in mind that you're sharing
+Context Management Tips & Wrap-up
+your usage limits across the various
+cloud interfaces So at a time where
+we're already limited severely with
+cloud usage I say be careful Anyways I
+hope you guys found this video helpful
+or insightful If there's something else
+you want me to explain or you want me to
+get into the new version of cursor let
+me know Thank you guys for watching Have

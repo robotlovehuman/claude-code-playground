@@ -35,6 +35,11 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+# Add debug logging
+import logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
 # Database configuration
 DB_CONFIG = {
     'host': 'localhost',
@@ -46,9 +51,12 @@ DB_CONFIG = {
 # OpenAI configuration
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 if not OPENAI_API_KEY:
-    raise ValueError("OPENAI_API_KEY not found in environment variables")
+    logger.error("OPENAI_API_KEY not found in environment variables")
+    # For MCP, we should not raise errors during import
+    OPENAI_API_KEY = None
 
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
+# Initialize OpenAI client only if key is available
+openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
 # Initialize MCP server
 server = Server("basha-knowledge-enhanced")
@@ -64,6 +72,8 @@ class EnhancedBashaMCPServer:
     
     def get_embedding(self, text: str) -> List[float]:
         """Get OpenAI embedding for text"""
+        if not self.openai_client:
+            raise Exception("OpenAI client not initialized - check OPENAI_API_KEY")
         try:
             response = self.openai_client.embeddings.create(
                 model="text-embedding-3-large",
@@ -213,12 +223,6 @@ class EnhancedBashaMCPServer:
 
 # Initialize server instance
 enhanced_server = EnhancedBashaMCPServer()
-
-# Set up database on startup
-try:
-    enhanced_server.setup_database()
-except Exception as e:
-    print(f"Database setup failed: {e}", file=sys.stderr)
 
 # Define MCP Tools
 @server.list_tools()
@@ -821,14 +825,31 @@ Error: {str(e)}
 async def main():
     """Main server function"""
     try:
+        logger.info("Starting Basha Knowledge MCP Server...")
+        
+        # Set up database on first run
+        try:
+            enhanced_server.setup_database()
+            logger.info("Database setup complete")
+        except Exception as e:
+            logger.error(f"Database setup failed: {e}")
+            # Continue anyway - some functions might still work
+        
         # Test database connection
-        await enhanced_server.get_stats()
+        try:
+            stats = await enhanced_server.get_stats()
+            logger.info(f"Database stats: {stats}")
+        except Exception as e:
+            logger.warning(f"Could not get database stats: {e}")
         
         # Run the MCP server
-        await stdio_server(server)
+        logger.info("Starting MCP server...")
+        async with stdio_server(server):
+            logger.info("MCP server started successfully")
+            await asyncio.Event().wait()
         
     except Exception as e:
-        print(f"Server error: {e}", file=sys.stderr)
+        logger.error(f"Server error: {e}", exc_info=True)
         sys.exit(1)
 
 if __name__ == "__main__":

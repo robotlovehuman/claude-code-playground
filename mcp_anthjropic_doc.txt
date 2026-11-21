@@ -1,0 +1,4339 @@
+Build with Claude
+Model Context Protocol (MCP)
+
+Copy page
+
+Learn how to set up MCP with Claude Code.
+
+Model Context Protocol (MCP) is an open protocol that enables LLMs to access external tools and data sources. For more details about MCP, see the MCP documentation.
+
+Use third party MCP servers at your own risk. Make sure you trust the MCP servers, and be especially careful when using MCP servers that talk to the internet, as these can expose you to prompt injection risk.
+
+​
+Configure MCP servers
+1
+Add an MCP stdio Server
+
+
+Copy
+# Basic syntax
+claude mcp add <name> <command> [args...]
+
+# Example: Adding a local server
+claude mcp add my-server -e API_KEY=123 -- /path/to/server arg1 arg2
+2
+Add an MCP SSE Server
+
+
+Copy
+# Basic syntax
+claude mcp add --transport sse <name> <url>
+
+# Example: Adding an SSE server
+claude mcp add --transport sse sse-server https://example.com/sse-endpoint
+
+# Example: Adding an SSE server with custom headers
+claude mcp add --transport sse api-server https://api.example.com/mcp --header "X-API-Key: your-key"
+3
+Add an MCP HTTP Server
+
+
+Copy
+# Basic syntax
+claude mcp add --transport http <name> <url>
+
+# Example: Adding a streamable HTTP server
+claude mcp add --transport http http-server https://example.com/mcp
+
+# Example: Adding an HTTP server with authentication header
+claude mcp add --transport http secure-server https://api.example.com/mcp --header "Authorization: Bearer your-token"
+4
+Manage your MCP servers
+
+
+Copy
+# List all configured servers
+claude mcp list
+
+# Get details for a specific server
+claude mcp get my-server
+
+# Remove a server
+claude mcp remove my-server
+Tips:
+
+Use the -s or --scope flag to specify where the configuration is stored:
+local (default): Available only to you in the current project (was called project in older versions)
+project: Shared with everyone in the project via .mcp.json file
+user: Available to you across all projects (was called global in older versions)
+Set environment variables with -e or --env flags (e.g., -e KEY=value)
+Configure MCP server startup timeout using the MCP_TIMEOUT environment variable (e.g., MCP_TIMEOUT=10000 claude sets a 10-second timeout)
+Check MCP server status any time using the /mcp command within Claude Code
+MCP follows a client-server architecture where Claude Code (the client) can connect to multiple specialized servers
+Claude Code supports SSE (Server-Sent Events) and streamable HTTP servers for real-time communication
+Use /mcp to authenticate with remote servers that require OAuth 2.0 authentication
+​
+Understanding MCP server scopes
+MCP servers can be configured at three different scope levels, each serving distinct purposes for managing server accessibility and sharing. Understanding these scopes helps you determine the best way to configure servers for your specific needs.
+
+​
+Scope hierarchy and precedence
+MCP server configurations follow a clear precedence hierarchy. When servers with the same name exist at multiple scopes, the system resolves conflicts by prioritizing local-scoped servers first, followed by project-scoped servers, and finally user-scoped servers. This design ensures that personal configurations can override shared ones when needed.
+
+​
+Local scope
+Local-scoped servers represent the default configuration level and are stored in your project-specific user settings. These servers remain private to you and are only accessible when working within the current project directory. This scope is ideal for personal development servers, experimental configurations, or servers containing sensitive credentials that shouldn’t be shared.
+
+
+Copy
+# Add a local-scoped server (default)
+claude mcp add my-private-server /path/to/server
+
+# Explicitly specify local scope
+claude mcp add my-private-server -s local /path/to/server
+​
+Project scope
+Project-scoped servers enable team collaboration by storing configurations in a .mcp.json file at your project’s root directory. This file is designed to be checked into version control, ensuring all team members have access to the same MCP tools and services. When you add a project-scoped server, Claude Code automatically creates or updates this file with the appropriate configuration structure.
+
+
+Copy
+# Add a project-scoped server
+claude mcp add shared-server -s project /path/to/server
+The resulting .mcp.json file follows a standardized format:
+
+
+Copy
+{
+  "mcpServers": {
+    "shared-server": {
+      "command": "/path/to/server",
+      "args": [],
+      "env": {}
+    }
+  }
+}
+For security reasons, Claude Code prompts for approval before using project-scoped servers from .mcp.json files. If you need to reset these approval choices, use the claude mcp reset-project-choices command.
+
+​
+User scope
+User-scoped servers provide cross-project accessibility, making them available across all projects on your machine while remaining private to your user account. This scope works well for personal utility servers, development tools, or services you frequently use across different projects.
+
+
+Copy
+# Add a user server
+claude mcp add my-user-server -s user /path/to/server
+​
+Choosing the right scope
+Select your scope based on:
+
+Local scope: Personal servers, experimental configurations, or sensitive credentials specific to one project
+Project scope: Team-shared servers, project-specific tools, or services required for collaboration
+User scope: Personal utilities needed across multiple projects, development tools, or frequently-used services
+​
+Authenticate with remote MCP servers
+Many remote MCP servers require authentication. Claude Code supports OAuth 2.0 authentication flow for secure connection to these servers.
+
+1
+Add a remote server requiring authentication
+
+
+Copy
+# Add an SSE or HTTP server that requires OAuth
+claude mcp add --transport sse github-server https://api.github.com/mcp
+2
+Authenticate using the /mcp command
+
+Within Claude Code, use the /mcp command to manage authentication:
+
+
+Copy
+> /mcp
+This opens an interactive menu where you can:
+
+View connection status for all servers
+Authenticate with servers requiring OAuth
+Clear existing authentication
+View server capabilities
+3
+Complete the OAuth flow
+
+When you select “Authenticate” for a server:
+
+Your browser opens automatically to the OAuth provider
+Complete the authentication in your browser
+Claude Code receives and securely stores the access token
+The server connection becomes active
+Tips:
+
+Authentication tokens are stored securely and refreshed automatically
+Use “Clear authentication” in the /mcp menu to revoke access
+If your browser doesn’t open automatically, copy the provided URL
+OAuth authentication works with both SSE and HTTP transports
+​
+Connect to a Postgres MCP server
+Suppose you want to give Claude read-only access to a PostgreSQL database for querying and schema inspection.
+
+1
+Add the Postgres MCP server
+
+
+Copy
+claude mcp add postgres-server /path/to/postgres-mcp-server --connection-string "postgresql://user:pass@localhost:5432/mydb"
+2
+Query your database with Claude
+
+
+Copy
+> describe the schema of our users table
+
+Copy
+> what are the most recent orders in the system?
+
+Copy
+> show me the relationship between customers and invoices
+Tips:
+
+The Postgres MCP server provides read-only access for safety
+Claude can help you explore database structure and run analytical queries
+You can use this to quickly understand database schemas in unfamiliar projects
+Make sure your connection string uses appropriate credentials with minimum required permissions
+​
+Add MCP servers from JSON configuration
+Suppose you have a JSON configuration for a single MCP server that you want to add to Claude Code.
+
+1
+Add an MCP server from JSON
+
+
+Copy
+# Basic syntax
+claude mcp add-json <name> '<json>'
+
+# Example: Adding a stdio server with JSON configuration
+claude mcp add-json weather-api '{"type":"stdio","command":"/path/to/weather-cli","args":["--api-key","abc123"],"env":{"CACHE_DIR":"/tmp"}}'
+2
+Verify the server was added
+
+
+Copy
+claude mcp get weather-api
+Tips:
+
+Make sure the JSON is properly escaped in your shell
+The JSON must conform to the MCP server configuration schema
+You can use -s global to add the server to your global configuration instead of the project-specific one
+​
+Import MCP servers from Claude Desktop
+Suppose you have already configured MCP servers in Claude Desktop and want to use the same servers in Claude Code without manually reconfiguring them.
+
+1
+Import servers from Claude Desktop
+
+
+Copy
+# Basic syntax 
+claude mcp add-from-claude-desktop 
+2
+Select which servers to import
+
+After running the command, you’ll see an interactive dialog that allows you to select which servers you want to import.
+
+3
+Verify the servers were imported
+
+
+Copy
+claude mcp list 
+Tips:
+
+This feature only works on macOS and Windows Subsystem for Linux (WSL)
+It reads the Claude Desktop configuration file from its standard location on those platforms
+Use the -s global flag to add servers to your global configuration
+Imported servers will have the same names as in Claude Desktop
+If servers with the same names already exist, they will get a numerical suffix (e.g., server_1)
+​
+Use Claude Code as an MCP server
+Suppose you want to use Claude Code itself as an MCP server that other applications can connect to, providing them with Claude’s tools and capabilities.
+
+1
+Start Claude as an MCP server
+
+
+Copy
+# Basic syntax
+claude mcp serve
+2
+Connect from another application
+
+You can connect to Claude Code MCP server from any MCP client, such as Claude Desktop. If you’re using Claude Desktop, you can add the Claude Code MCP server using this configuration:
+
+
+Copy
+{
+  "command": "claude",
+  "args": ["mcp", "serve"],
+  "env": {}
+}
+Tips:
+
+The server provides access to Claude’s tools like View, Edit, LS, etc.
+In Claude Desktop, try asking Claude to read files in a directory, make edits, and more.
+Note that this MCP server is simply exposing Claude Code’s tools to your MCP client, so your own client is responsible for implementing user confirmation for individual tool calls.
+​
+Use MCP resources
+MCP servers can expose resources that you can reference using @ mentions, similar to how you reference files.
+
+​
+Reference MCP resources
+1
+List available resources
+
+Type @ in your prompt to see available resources from all connected MCP servers. Resources appear alongside files in the autocomplete menu.
+
+2
+Reference a specific resource
+
+Use the format @server:protocol://resource/path to reference a resource:
+
+
+Copy
+> Can you analyze @github:issue://123 and suggest a fix?
+
+Copy
+> Please review the API documentation at @docs:file://api/authentication
+3
+Multiple resource references
+
+You can reference multiple resources in a single prompt:
+
+
+Copy
+> Compare @postgres:schema://users with @docs:file://database/user-model
+Tips:
+
+Resources are automatically fetched and included as attachments when referenced
+Resource paths are fuzzy-searchable in the @ mention autocomplete
+Claude Code automatically provides tools to list and read MCP resources when servers support them
+Resources can contain any type of content that the MCP server provides (text, JSON, structured data, etc.)
+​
+Use MCP prompts as slash commands
+MCP servers can expose prompts that become available as slash commands in Claude Code.
+
+​
+Execute MCP prompts
+1
+Discover available prompts
+
+Type / to see all available commands, including those from MCP servers. MCP prompts appear with the format /mcp__servername__promptname.
+
+2
+Execute a prompt without arguments
+
+
+Copy
+> /mcp__github__list_prs
+3
+Execute a prompt with arguments
+
+Many prompts accept arguments. Pass them space-separated after the command:
+
+
+Copy
+> /mcp__github__pr_review 456
+
+Copy
+> /mcp__jira__create_issue "Bug in login flow" high
+Tips:
+
+MCP prompts are dynamically discovered from connected servers
+Arguments are parsed based on the prompt’s defined parameters
+Prompt results are injected directly into the conversation
+Server and prompt names are normalized (spaces become underscores)
+Was this page helpful?
+
+
+Yes
+
+No
+GitHub Actions
+Troubleshooting
+x
+linkedin
+discord
+
+
+Example Servers
+
+Copy page
+
+A list of example servers and implementations
+
+This page showcases various Model Context Protocol (MCP) servers that demonstrate the protocol’s capabilities and versatility. These servers enable Large Language Models (LLMs) to securely access tools and data sources.
+
+​
+Reference implementations
+These official reference servers demonstrate core MCP features and SDK usage:
+
+​
+Current reference servers
+Filesystem - Secure file operations with configurable access controls
+Fetch - Web content fetching and conversion optimized for LLM usage
+Memory - Knowledge graph-based persistent memory system
+Sequential Thinking - Dynamic problem-solving through thought sequences
+​
+Archived servers (historical reference)
+⚠️ Note: The following servers have been moved to the servers-archived repository and are no longer actively maintained. They are provided for historical reference only.
+
+​
+Data and file systems
+PostgreSQL - Read-only database access with schema inspection capabilities
+SQLite - Database interaction and business intelligence features
+Google Drive - File access and search capabilities for Google Drive
+​
+Development tools
+Git - Tools to read, search, and manipulate Git repositories
+GitHub - Repository management, file operations, and GitHub API integration
+GitLab - GitLab API integration enabling project management
+Sentry - Retrieving and analyzing issues from Sentry.io
+​
+Web and browser automation
+Brave Search - Web and local search using Brave’s Search API
+Puppeteer - Browser automation and web scraping capabilities
+​
+Productivity and communication
+Slack - Channel management and messaging capabilities
+Google Maps - Location services, directions, and place details
+​
+AI and specialized tools
+EverArt - AI image generation using various models
+AWS KB Retrieval - Retrieval from AWS Knowledge Base using Bedrock Agent Runtime
+​
+Official integrations
+Visit the MCP Servers Repository (Official Integrations section) for a list of MCP servers maintained by companies for their platforms.
+
+​
+Community implementations
+Visit the MCP Servers Repository (Community section) for a list of MCP servers maintained by community members.
+
+​
+Getting started
+​
+Using reference servers
+TypeScript-based servers can be used directly with npx:
+
+
+Copy
+npx -y @modelcontextprotocol/server-memory
+Python-based servers can be used with uvx (recommended) or pip:
+
+
+Copy
+# Using uvx
+uvx mcp-server-git
+
+# Using pip
+pip install mcp-server-git
+python -m mcp_server_git
+​
+Configuring with Claude
+To use an MCP server with Claude, add it to your configuration:
+
+
+Copy
+{
+  "mcpServers": {
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/path/to/allowed/files"
+      ]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "<YOUR_TOKEN>"
+      }
+    }
+  }
+}
+​
+Additional resources
+Visit the MCP Servers Repository (Resources section) for a collection of other resources and projects related to MCP.
+
+Visit our GitHub Discussions to engage with the MCP community.
+
+Was this page helpful?
+
+
+Yes
+
+No
+Transports
+Example Clients
+github
+
+
+User Guide
+Introduction
+
+Copy page
+
+Get started with the Model Context Protocol (MCP)
+
+MCP is an open protocol that standardizes how applications provide context to LLMs. Think of MCP like a USB-C port for AI applications. Just as USB-C provides a standardized way to connect your devices to various peripherals and accessories, MCP provides a standardized way to connect AI models to different data sources and tools.
+
+​
+Why MCP?
+MCP helps you build agents and complex workflows on top of LLMs. LLMs frequently need to integrate with data and tools, and MCP provides:
+
+A growing list of pre-built integrations that your LLM can directly plug into
+The flexibility to switch between LLM providers and vendors
+Best practices for securing your data within your infrastructure
+​
+General architecture
+At its core, MCP follows a client-server architecture where a host application can connect to multiple servers:
+
+Internet
+
+Your Computer
+
+MCP Protocol
+
+MCP Protocol
+
+Web APIs
+
+Web APIs
+
+MCP Protocol
+
+Host with MCP Client
+(Claude, IDEs, Tools)
+
+MCP Server A
+
+MCP Server B
+
+Local
+Data Source A
+
+MCP Server C
+
+Remote
+Service B
+
+Remote
+Service C
+
+MCP Hosts: Programs like Claude Desktop, IDEs, or AI tools that want to access data through MCP
+MCP Clients: Protocol clients that maintain 1:1 connections with servers
+MCP Servers: Lightweight programs that each expose specific capabilities through the standardized Model Context Protocol
+Local Data Sources: Your computer’s files, databases, and services that MCP servers can securely access
+Remote Services: External systems available over the internet (e.g., through APIs) that MCP servers can connect to
+​
+Get started
+Choose the path that best fits your needs:
+
+​
+Quick Starts
+For Server Developers
+Get started building your own server to use in Claude for Desktop and other clients
+
+For Client Developers
+Get started building your own client that can integrate with all MCP servers
+
+For Claude Desktop Users
+Get started using pre-built servers in Claude for Desktop
+
+​
+Examples
+Example Servers
+Check out our gallery of official MCP servers and implementations
+
+Example Clients
+View the list of clients that support MCP integrations
+
+​
+Tutorials
+Building MCP with LLMs
+Learn how to use LLMs like Claude to speed up your MCP development
+
+Debugging Guide
+Learn how to effectively debug MCP servers and integrations
+
+MCP Inspector
+Test and inspect your MCP servers with our interactive debugging tool
+
+MCP Workshop (Video, 2hr)
+
+​
+Explore MCP
+Dive deeper into MCP’s core concepts and capabilities:
+
+Core architecture
+Understand how MCP connects clients, servers, and LLMs
+
+Resources
+Expose data and content from your servers to LLMs
+
+Prompts
+Create reusable prompt templates and workflows
+
+Tools
+Enable LLMs to perform actions through your server
+
+Sampling
+Let your servers request completions from LLMs
+
+Transports
+Learn about MCP’s communication mechanism
+
+​
+Contributing
+Want to contribute? Check out our Contributing Guide to learn how you can help improve MCP.
+
+​
+Support and Feedback
+Here’s how to get help or provide feedback:
+
+For bug reports and feature requests related to the MCP specification, SDKs, or documentation (open source), please create a GitHub issue
+For discussions or Q&A about the MCP specification, use the specification discussions
+For discussions or Q&A about other MCP open source components, use the organization discussions
+For bug reports, feature requests, and questions related to Claude.app and claude.ai’s MCP integration, please see Anthropic’s guide on How to Get Support
+Was this page helpful?
+
+
+Yes
+
+No
+Quickstart
+For Server Developers
+
+Copy page
+
+Get started building your own server to use in Claude for Desktop and other clients.
+
+In this tutorial, we’ll build a simple MCP weather server and connect it to a host, Claude for Desktop. We’ll start with a basic setup, and then progress to more complex use cases.
+
+​
+What we’ll be building
+Many LLMs do not currently have the ability to fetch the forecast and severe weather alerts. Let’s use MCP to solve that!
+
+We’ll build a server that exposes two tools: get-alerts and get-forecast. Then we’ll connect the server to an MCP host (in this case, Claude for Desktop):
+
+
+
+Servers can connect to any client. We’ve chosen Claude for Desktop here for simplicity, but we also have guides on building your own client as well as a list of other clients here.
+
+​
+Core MCP Concepts
+MCP servers can provide three main types of capabilities:
+
+Resources: File-like data that can be read by clients (like API responses or file contents)
+Tools: Functions that can be called by the LLM (with user approval)
+Prompts: Pre-written templates that help users accomplish specific tasks
+This tutorial will primarily focus on tools.
+
+Python
+Node
+Java
+Kotlin
+C#
+Let’s get started with building our weather server! You can find the complete code for what we’ll be building here.
+
+​
+Prerequisite knowledge
+This quickstart assumes you have familiarity with:
+
+Python
+LLMs like Claude
+​
+System requirements
+Python 3.10 or higher installed.
+You must use the Python MCP SDK 1.2.0 or higher.
+​
+Set up your environment
+First, let’s install uv and set up our Python project and environment:
+
+
+MacOS/Linux
+
+Windows
+
+Copy
+curl -LsSf https://astral.sh/uv/install.sh | sh
+Make sure to restart your terminal afterwards to ensure that the uv command gets picked up.
+
+Now, let’s create and set up our project:
+
+
+MacOS/Linux
+
+Windows
+
+Copy
+# Create a new directory for our project
+uv init weather
+cd weather
+
+# Create virtual environment and activate it
+uv venv
+source .venv/bin/activate
+
+# Install dependencies
+uv add "mcp[cli]" httpx
+
+# Create our server file
+touch weather.py
+Now let’s dive into building your server.
+
+​
+Building your server
+​
+Importing packages and setting up the instance
+Add these to the top of your weather.py:
+
+
+Copy
+from typing import Any
+import httpx
+from mcp.server.fastmcp import FastMCP
+
+# Initialize FastMCP server
+mcp = FastMCP("weather")
+
+# Constants
+NWS_API_BASE = "https://api.weather.gov"
+USER_AGENT = "weather-app/1.0"
+The FastMCP class uses Python type hints and docstrings to automatically generate tool definitions, making it easy to create and maintain MCP tools.
+
+​
+Helper functions
+Next, let’s add our helper functions for querying and formatting the data from the National Weather Service API:
+
+
+Copy
+async def make_nws_request(url: str) -> dict[str, Any] | None:
+    """Make a request to the NWS API with proper error handling."""
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": "application/geo+json"
+    }
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(url, headers=headers, timeout=30.0)
+            response.raise_for_status()
+            return response.json()
+        except Exception:
+            return None
+
+def format_alert(feature: dict) -> str:
+    """Format an alert feature into a readable string."""
+    props = feature["properties"]
+    return f"""
+Event: {props.get('event', 'Unknown')}
+Area: {props.get('areaDesc', 'Unknown')}
+Severity: {props.get('severity', 'Unknown')}
+Description: {props.get('description', 'No description available')}
+Instructions: {props.get('instruction', 'No specific instructions provided')}
+"""
+​
+Implementing tool execution
+The tool execution handler is responsible for actually executing the logic of each tool. Let’s add it:
+
+
+Copy
+@mcp.tool()
+async def get_alerts(state: str) -> str:
+    """Get weather alerts for a US state.
+
+    Args:
+        state: Two-letter US state code (e.g. CA, NY)
+    """
+    url = f"{NWS_API_BASE}/alerts/active/area/{state}"
+    data = await make_nws_request(url)
+
+    if not data or "features" not in data:
+        return "Unable to fetch alerts or no alerts found."
+
+    if not data["features"]:
+        return "No active alerts for this state."
+
+    alerts = [format_alert(feature) for feature in data["features"]]
+    return "\n---\n".join(alerts)
+
+@mcp.tool()
+async def get_forecast(latitude: float, longitude: float) -> str:
+    """Get weather forecast for a location.
+
+    Args:
+        latitude: Latitude of the location
+        longitude: Longitude of the location
+    """
+    # First get the forecast grid endpoint
+    points_url = f"{NWS_API_BASE}/points/{latitude},{longitude}"
+    points_data = await make_nws_request(points_url)
+
+    if not points_data:
+        return "Unable to fetch forecast data for this location."
+
+    # Get the forecast URL from the points response
+    forecast_url = points_data["properties"]["forecast"]
+    forecast_data = await make_nws_request(forecast_url)
+
+    if not forecast_data:
+        return "Unable to fetch detailed forecast."
+
+    # Format the periods into a readable forecast
+    periods = forecast_data["properties"]["periods"]
+    forecasts = []
+    for period in periods[:5]:  # Only show next 5 periods
+        forecast = f"""
+{period['name']}:
+Temperature: {period['temperature']}°{period['temperatureUnit']}
+Wind: {period['windSpeed']} {period['windDirection']}
+Forecast: {period['detailedForecast']}
+"""
+        forecasts.append(forecast)
+
+    return "\n---\n".join(forecasts)
+​
+Running the server
+Finally, let’s initialize and run the server:
+
+
+Copy
+if __name__ == "__main__":
+    # Initialize and run the server
+    mcp.run(transport='stdio')
+Your server is complete! Run uv run weather.py to confirm that everything’s working.
+
+Let’s now test your server from an existing MCP host, Claude for Desktop.
+
+​
+Testing your server with Claude for Desktop
+Claude for Desktop is not yet available on Linux. Linux users can proceed to the Building a client tutorial to build an MCP client that connects to the server we just built.
+
+First, make sure you have Claude for Desktop installed. You can install the latest version here. If you already have Claude for Desktop, make sure it’s updated to the latest version.
+
+We’ll need to configure Claude for Desktop for whichever MCP servers you want to use. To do this, open your Claude for Desktop App configuration at ~/Library/Application Support/Claude/claude_desktop_config.json in a text editor. Make sure to create the file if it doesn’t exist.
+
+For example, if you have VS Code installed:
+
+MacOS/Linux
+Windows
+
+Copy
+code ~/Library/Application\ Support/Claude/claude_desktop_config.json
+You’ll then add your servers in the mcpServers key. The MCP UI elements will only show up in Claude for Desktop if at least one server is properly configured.
+
+In this case, we’ll add our single weather server like so:
+
+MacOS/Linux
+Windows
+Python
+
+Copy
+{
+  "mcpServers": {
+    "weather": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/ABSOLUTE/PATH/TO/PARENT/FOLDER/weather",
+        "run",
+        "weather.py"
+      ]
+    }
+  }
+}
+You may need to put the full path to the uv executable in the command field. You can get this by running which uv on MacOS/Linux or where uv on Windows.
+
+Make sure you pass in the absolute path to your server.
+
+This tells Claude for Desktop:
+
+There’s an MCP server named “weather”
+To launch it by running uv --directory /ABSOLUTE/PATH/TO/PARENT/FOLDER/weather run weather.py
+Save the file, and restart Claude for Desktop.
+
+​
+Test with commands
+Let’s make sure Claude for Desktop is picking up the two tools we’ve exposed in our weather server. You can do this by looking for the “Search and tools”  icon:
+
+
+After clicking on the slider icon, you should see two tools listed:
+
+
+If your server isn’t being picked up by Claude for Desktop, proceed to the Troubleshooting section for debugging tips.
+
+If the tool settings icon has shown up, you can now test your server by running the following commands in Claude for Desktop:
+
+What’s the weather in Sacramento?
+What are the active weather alerts in Texas?
+
+
+Since this is the US National Weather service, the queries will only work for US locations.
+
+​
+What’s happening under the hood
+When you ask a question:
+
+The client sends your question to Claude
+Claude analyzes the available tools and decides which one(s) to use
+The client executes the chosen tool(s) through the MCP server
+The results are sent back to Claude
+Claude formulates a natural language response
+The response is displayed to you!
+​
+Troubleshooting
+Claude for Desktop Integration Issues
+
+Weather API Issues
+
+For more advanced troubleshooting, check out our guide on Debugging MCP
+
+​
+Next steps
+Building a client
+Learn how to build your own MCP client that can connect to your server
+
+Example servers
+Check out our gallery of official MCP servers and implementations
+
+Debugging Guide
+Learn how to effectively debug MCP servers and integrations
+
+Building MCP with LLMs
+Learn how to use LLMs like Claude to speed up your MCP development
+
+Was this page helpful?
+
+
+Yes
+
+No
+Introduction
+For Client Developers
+github
+
+
+Quickstart
+For Client Developers
+
+Copy page
+
+Get started building your own client that can integrate with all MCP servers.
+
+In this tutorial, you’ll learn how to build an LLM-powered chatbot client that connects to MCP servers. It helps to have gone through the Server quickstart that guides you through the basics of building your first server.
+
+Python
+Node
+Java
+Kotlin
+C#
+You can find the complete code for this tutorial here.
+
+​
+System Requirements
+Before starting, ensure your system meets these requirements:
+
+Mac or Windows computer
+Latest Python version installed
+Latest version of uv installed
+​
+Setting Up Your Environment
+First, create a new Python project with uv:
+
+
+Copy
+# Create project directory
+uv init mcp-client
+cd mcp-client
+
+# Create virtual environment
+uv venv
+
+# Activate virtual environment
+# On Windows:
+.venv\Scripts\activate
+# On Unix or MacOS:
+source .venv/bin/activate
+
+# Install required packages
+uv add mcp anthropic python-dotenv
+
+# Remove boilerplate files
+# On Windows:
+del main.py
+# On Unix or MacOS:
+rm main.py
+
+# Create our main file
+touch client.py
+​
+Setting Up Your API Key
+You’ll need an Anthropic API key from the Anthropic Console.
+
+Create a .env file to store it:
+
+
+Copy
+# Create .env file
+touch .env
+Add your key to the .env file:
+
+
+Copy
+ANTHROPIC_API_KEY=<your key here>
+Add .env to your .gitignore:
+
+
+Copy
+echo ".env" >> .gitignore
+Make sure you keep your ANTHROPIC_API_KEY secure!
+
+​
+Creating the Client
+​
+Basic Client Structure
+First, let’s set up our imports and create the basic client class:
+
+
+Copy
+import asyncio
+from typing import Optional
+from contextlib import AsyncExitStack
+
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+
+from anthropic import Anthropic
+from dotenv import load_dotenv
+
+load_dotenv()  # load environment variables from .env
+
+class MCPClient:
+    def __init__(self):
+        # Initialize session and client objects
+        self.session: Optional[ClientSession] = None
+        self.exit_stack = AsyncExitStack()
+        self.anthropic = Anthropic()
+    # methods will go here
+​
+Server Connection Management
+Next, we’ll implement the method to connect to an MCP server:
+
+
+Copy
+async def connect_to_server(self, server_script_path: str):
+    """Connect to an MCP server
+
+    Args:
+        server_script_path: Path to the server script (.py or .js)
+    """
+    is_python = server_script_path.endswith('.py')
+    is_js = server_script_path.endswith('.js')
+    if not (is_python or is_js):
+        raise ValueError("Server script must be a .py or .js file")
+
+    command = "python" if is_python else "node"
+    server_params = StdioServerParameters(
+        command=command,
+        args=[server_script_path],
+        env=None
+    )
+
+    stdio_transport = await self.exit_stack.enter_async_context(stdio_client(server_params))
+    self.stdio, self.write = stdio_transport
+    self.session = await self.exit_stack.enter_async_context(ClientSession(self.stdio, self.write))
+
+    await self.session.initialize()
+
+    # List available tools
+    response = await self.session.list_tools()
+    tools = response.tools
+    print("\nConnected to server with tools:", [tool.name for tool in tools])
+​
+Query Processing Logic
+Now let’s add the core functionality for processing queries and handling tool calls:
+
+
+Copy
+async def process_query(self, query: str) -> str:
+    """Process a query using Claude and available tools"""
+    messages = [
+        {
+            "role": "user",
+            "content": query
+        }
+    ]
+
+    response = await self.session.list_tools()
+    available_tools = [{
+        "name": tool.name,
+        "description": tool.description,
+        "input_schema": tool.inputSchema
+    } for tool in response.tools]
+
+    # Initial Claude API call
+    response = self.anthropic.messages.create(
+        model="claude-3-5-sonnet-20241022",
+        max_tokens=1000,
+        messages=messages,
+        tools=available_tools
+    )
+
+    # Process response and handle tool calls
+    final_text = []
+
+    assistant_message_content = []
+    for content in response.content:
+        if content.type == 'text':
+            final_text.append(content.text)
+            assistant_message_content.append(content)
+        elif content.type == 'tool_use':
+            tool_name = content.name
+            tool_args = content.input
+
+            # Execute tool call
+            result = await self.session.call_tool(tool_name, tool_args)
+            final_text.append(f"[Calling tool {tool_name} with args {tool_args}]")
+
+            assistant_message_content.append(content)
+            messages.append({
+                "role": "assistant",
+                "content": assistant_message_content
+            })
+            messages.append({
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": content.id,
+                        "content": result.content
+                    }
+                ]
+            })
+
+            # Get next response from Claude
+            response = self.anthropic.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=1000,
+                messages=messages,
+                tools=available_tools
+            )
+
+            final_text.append(response.content[0].text)
+
+    return "\n".join(final_text)
+​
+Interactive Chat Interface
+Now we’ll add the chat loop and cleanup functionality:
+
+
+Copy
+async def chat_loop(self):
+    """Run an interactive chat loop"""
+    print("\nMCP Client Started!")
+    print("Type your queries or 'quit' to exit.")
+
+    while True:
+        try:
+            query = input("\nQuery: ").strip()
+
+            if query.lower() == 'quit':
+                break
+
+            response = await self.process_query(query)
+            print("\n" + response)
+
+        except Exception as e:
+            print(f"\nError: {str(e)}")
+
+async def cleanup(self):
+    """Clean up resources"""
+    await self.exit_stack.aclose()
+​
+Main Entry Point
+Finally, we’ll add the main execution logic:
+
+
+Copy
+async def main():
+    if len(sys.argv) < 2:
+        print("Usage: python client.py <path_to_server_script>")
+        sys.exit(1)
+
+    client = MCPClient()
+    try:
+        await client.connect_to_server(sys.argv[1])
+        await client.chat_loop()
+    finally:
+        await client.cleanup()
+
+if __name__ == "__main__":
+    import sys
+    asyncio.run(main())
+You can find the complete client.py file here.
+
+​
+Key Components Explained
+​
+1. Client Initialization
+The MCPClient class initializes with session management and API clients
+Uses AsyncExitStack for proper resource management
+Configures the Anthropic client for Claude interactions
+​
+2. Server Connection
+Supports both Python and Node.js servers
+Validates server script type
+Sets up proper communication channels
+Initializes the session and lists available tools
+​
+3. Query Processing
+Maintains conversation context
+Handles Claude’s responses and tool calls
+Manages the message flow between Claude and tools
+Combines results into a coherent response
+​
+4. Interactive Interface
+Provides a simple command-line interface
+Handles user input and displays responses
+Includes basic error handling
+Allows graceful exit
+​
+5. Resource Management
+Proper cleanup of resources
+Error handling for connection issues
+Graceful shutdown procedures
+​
+Common Customization Points
+Tool Handling
+
+Modify process_query() to handle specific tool types
+Add custom error handling for tool calls
+Implement tool-specific response formatting
+Response Processing
+
+Customize how tool results are formatted
+Add response filtering or transformation
+Implement custom logging
+User Interface
+
+Add a GUI or web interface
+Implement rich console output
+Add command history or auto-completion
+​
+Running the Client
+To run your client with any MCP server:
+
+
+Copy
+uv run client.py path/to/server.py # python server
+uv run client.py path/to/build/index.js # node server
+If you’re continuing the weather tutorial from the server quickstart, your command might look something like this: python client.py .../quickstart-resources/weather-server-python/weather.py
+
+The client will:
+
+Connect to the specified server
+List available tools
+Start an interactive chat session where you can:
+Enter queries
+See tool executions
+Get responses from Claude
+Here’s an example of what it should look like if connected to the weather server from the server quickstart:
+
+
+​
+How It Works
+When you submit a query:
+
+The client gets the list of available tools from the server
+Your query is sent to Claude along with tool descriptions
+Claude decides which tools (if any) to use
+The client executes any requested tool calls through the server
+Results are sent back to Claude
+Claude provides a natural language response
+The response is displayed to you
+​
+Best practices
+Error Handling
+
+Always wrap tool calls in try-catch blocks
+Provide meaningful error messages
+Gracefully handle connection issues
+Resource Management
+
+Use AsyncExitStack for proper cleanup
+Close connections when done
+Handle server disconnections
+Security
+
+Store API keys securely in .env
+Validate server responses
+Be cautious with tool permissions
+​
+Troubleshooting
+​
+Server Path Issues
+Double-check the path to your server script is correct
+Use the absolute path if the relative path isn’t working
+For Windows users, make sure to use forward slashes (/) or escaped backslashes (\) in the path
+Verify the server file has the correct extension (.py for Python or .js for Node.js)
+Example of correct path usage:
+
+
+Copy
+# Relative path
+uv run client.py ./server/weather.py
+
+# Absolute path
+uv run client.py /Users/username/projects/mcp-server/weather.py
+
+# Windows path (either format works)
+uv run client.py C:/projects/mcp-server/weather.py
+uv run client.py C:\\projects\\mcp-server\\weather.py
+​
+Response Timing
+The first response might take up to 30 seconds to return
+This is normal and happens while:
+The server initializes
+Claude processes the query
+Tools are being executed
+Subsequent responses are typically faster
+Don’t interrupt the process during this initial waiting period
+​
+Common Error Messages
+If you see:
+
+FileNotFoundError: Check your server path
+Connection refused: Ensure the server is running and the path is correct
+Tool execution failed: Verify the tool’s required environment variables are set
+Timeout error: Consider increasing the timeout in your client configuration
+​
+Next steps
+Example servers
+Check out our gallery of official MCP servers and implementations
+
+Clients
+View the list of clients that support MCP integrations
+
+Building MCP with LLMs
+Learn how to use LLMs like Claude to speed up your MCP development
+
+Core architecture
+Understand how MCP connects clients, servers, and LLMs
+
+Was this page helpful?
+
+
+Yes
+
+No
+For Server Developers
+For Claude Desktop Users
+github
+
+Concepts
+Core architecture
+
+Copy page
+
+Understand how MCP connects clients, servers, and LLMs
+
+The Model Context Protocol (MCP) is built on a flexible, extensible architecture that enables seamless communication between LLM applications and integrations. This document covers the core architectural components and concepts.
+
+​
+Overview
+MCP follows a client-server architecture where:
+
+Hosts are LLM applications (like Claude Desktop or IDEs) that initiate connections
+Clients maintain 1:1 connections with servers, inside the host application
+Servers provide context, tools, and prompts to clients
+Server Process
+
+Server Process
+
+Host
+
+Transport Layer
+
+Transport Layer
+
+MCP Client
+
+MCP Client
+
+MCP Server
+
+MCP Server
+
+​
+Core components
+​
+Protocol layer
+The protocol layer handles message framing, request/response linking, and high-level communication patterns.
+
+TypeScript
+Python
+
+Copy
+class Protocol<Request, Notification, Result> {
+    // Handle incoming requests
+    setRequestHandler<T>(schema: T, handler: (request: T, extra: RequestHandlerExtra) => Promise<Result>): void
+
+    // Handle incoming notifications
+    setNotificationHandler<T>(schema: T, handler: (notification: T) => Promise<void>): void
+
+    // Send requests and await responses
+    request<T>(request: Request, schema: T, options?: RequestOptions): Promise<T>
+
+    // Send one-way notifications
+    notification(notification: Notification): Promise<void>
+}
+Key classes include:
+
+Protocol
+Client
+Server
+​
+Transport layer
+The transport layer handles the actual communication between clients and servers. MCP supports multiple transport mechanisms:
+
+Stdio transport
+
+Uses standard input/output for communication
+Ideal for local processes
+Streamable HTTP transport
+
+Uses HTTP with optional Server-Sent Events for streaming
+HTTP POST for client-to-server messages
+All transports use JSON-RPC 2.0 to exchange messages. See the specification for detailed information about the Model Context Protocol message format.
+
+​
+Message types
+MCP has these main types of messages:
+
+Requests expect a response from the other side:
+
+
+Copy
+interface Request {
+  method: string;
+  params?: { ... };
+}
+Results are successful responses to requests:
+
+
+Copy
+interface Result {
+  [key: string]: unknown;
+}
+Errors indicate that a request failed:
+
+
+Copy
+interface Error {
+  code: number;
+  message: string;
+  data?: unknown;
+}
+Notifications are one-way messages that don’t expect a response:
+
+
+Copy
+interface Notification {
+  method: string;
+  params?: { ... };
+}
+​
+Connection lifecycle
+​
+1. Initialization
+Server
+Client
+Server
+Client
+Connection ready for use
+initialize request
+initialize response
+initialized notification
+Client sends initialize request with protocol version and capabilities
+Server responds with its protocol version and capabilities
+Client sends initialized notification as acknowledgment
+Normal message exchange begins
+​
+2. Message exchange
+After initialization, the following patterns are supported:
+
+Request-Response: Client or server sends requests, the other responds
+Notifications: Either party sends one-way messages
+​
+3. Termination
+Either party can terminate the connection:
+
+Clean shutdown via close()
+Transport disconnection
+Error conditions
+​
+Error handling
+MCP defines these standard error codes:
+
+
+Copy
+enum ErrorCode {
+  // Standard JSON-RPC error codes
+  ParseError = -32700,
+  InvalidRequest = -32600,
+  MethodNotFound = -32601,
+  InvalidParams = -32602,
+  InternalError = -32603,
+}
+SDKs and applications can define their own error codes above -32000.
+
+Errors are propagated through:
+
+Error responses to requests
+Error events on transports
+Protocol-level error handlers
+​
+Implementation example
+Here’s a basic example of implementing an MCP server:
+
+TypeScript
+Python
+
+Copy
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+
+const server = new Server({
+  name: "example-server",
+  version: "1.0.0"
+}, {
+  capabilities: {
+    resources: {}
+  }
+});
+
+// Handle requests
+server.setRequestHandler(ListResourcesRequestSchema, async () => {
+  return {
+    resources: [
+      {
+        uri: "example://resource",
+        name: "Example Resource"
+      }
+    ]
+  };
+});
+
+// Connect transport
+const transport = new StdioServerTransport();
+await server.connect(transport);
+​
+Best practices
+​
+Transport selection
+Local communication
+
+Use stdio transport for local processes
+Efficient for same-machine communication
+Simple process management
+Remote communication
+
+Use Streamable HTTP for scenarios requiring HTTP compatibility
+Consider security implications including authentication and authorization
+​
+Message handling
+Request processing
+
+Validate inputs thoroughly
+Use type-safe schemas
+Handle errors gracefully
+Implement timeouts
+Progress reporting
+
+Use progress tokens for long operations
+Report progress incrementally
+Include total progress when known
+Error management
+
+Use appropriate error codes
+Include helpful error messages
+Clean up resources on errors
+​
+Security considerations
+Transport security
+
+Use TLS for remote connections
+Validate connection origins
+Implement authentication when needed
+Message validation
+
+Validate all incoming messages
+Sanitize inputs
+Check message size limits
+Verify JSON-RPC format
+Resource protection
+
+Implement access controls
+Validate resource paths
+Monitor resource usage
+Rate limit requests
+Error handling
+
+Don’t leak sensitive information
+Log security-relevant errors
+Implement proper cleanup
+Handle DoS scenarios
+​
+Debugging and monitoring
+Logging
+
+Log protocol events
+Track message flow
+Monitor performance
+Record errors
+Diagnostics
+
+Implement health checks
+Monitor connection state
+Track resource usage
+Profile performance
+Testing
+
+Test different transports
+Verify error handling
+Check edge cases
+Load test servers
+Was this page helpful?
+
+
+Yes
+
+No
+For Claude Desktop Users
+Resources
+github
+
+
+Concepts
+Resources
+
+Copy page
+
+Expose data and content from your servers to LLMs
+
+Resources are a core primitive in the Model Context Protocol (MCP) that allow servers to expose data and content that can be read by clients and used as context for LLM interactions.
+
+Resources are designed to be application-controlled, meaning that the client application can decide how and when they should be used. Different MCP clients may handle resources differently. For example:
+
+Claude Desktop currently requires users to explicitly select resources before they can be used
+Other clients might automatically select resources based on heuristics
+Some implementations may even allow the AI model itself to determine which resources to use
+Server authors should be prepared to handle any of these interaction patterns when implementing resource support. In order to expose data to models automatically, server authors should use a model-controlled primitive such as Tools.
+
+​
+Overview
+Resources represent any kind of data that an MCP server wants to make available to clients. This can include:
+
+File contents
+Database records
+API responses
+Live system data
+Screenshots and images
+Log files
+And more
+Each resource is identified by a unique URI and can contain either text or binary data.
+
+​
+Resource URIs
+Resources are identified using URIs that follow this format:
+
+
+Copy
+[protocol]://[host]/[path]
+For example:
+
+file:///home/user/documents/report.pdf
+postgres://database/customers/schema
+screen://localhost/display1
+The protocol and path structure is defined by the MCP server implementation. Servers can define their own custom URI schemes.
+
+​
+Resource types
+Resources can contain two types of content:
+
+​
+Text resources
+Text resources contain UTF-8 encoded text data. These are suitable for:
+
+Source code
+Configuration files
+Log files
+JSON/XML data
+Plain text
+​
+Binary resources
+Binary resources contain raw binary data encoded in base64. These are suitable for:
+
+Images
+PDFs
+Audio files
+Video files
+Other non-text formats
+​
+Resource discovery
+Clients can discover available resources through two main methods:
+
+​
+Direct resources
+Servers expose a list of resources via the resources/list request. Each resource includes:
+
+
+Copy
+{
+  uri: string;           // Unique identifier for the resource
+  name: string;          // Human-readable name
+  description?: string;  // Optional description
+  mimeType?: string;     // Optional MIME type
+  size?: number;         // Optional size in bytes
+}
+​
+Resource templates
+For dynamic resources, servers can expose URI templates that clients can use to construct valid resource URIs:
+
+
+Copy
+{
+  uriTemplate: string;   // URI template following RFC 6570
+  name: string;          // Human-readable name for this type
+  description?: string;  // Optional description
+  mimeType?: string;     // Optional MIME type for all matching resources
+}
+​
+Reading resources
+To read a resource, clients make a resources/read request with the resource URI.
+
+The server responds with a list of resource contents:
+
+
+Copy
+{
+  contents: [
+    {
+      uri: string;        // The URI of the resource
+      mimeType?: string;  // Optional MIME type
+
+      // One of:
+      text?: string;      // For text resources
+      blob?: string;      // For binary resources (base64 encoded)
+    }
+  ]
+}
+Servers may return multiple resources in response to one resources/read request. This could be used, for example, to return a list of files inside a directory when the directory is read.
+
+​
+Resource updates
+MCP supports real-time updates for resources through two mechanisms:
+
+​
+List changes
+Servers can notify clients when their list of available resources changes via the notifications/resources/list_changed notification.
+
+​
+Content changes
+Clients can subscribe to updates for specific resources:
+
+Client sends resources/subscribe with resource URI
+Server sends notifications/resources/updated when the resource changes
+Client can fetch latest content with resources/read
+Client can unsubscribe with resources/unsubscribe
+​
+Example implementation
+Here’s a simple example of implementing resource support in an MCP server:
+
+TypeScript
+Python
+
+Copy
+const server = new Server({
+  name: "example-server",
+  version: "1.0.0"
+}, {
+  capabilities: {
+    resources: {}
+  }
+});
+
+// List available resources
+server.setRequestHandler(ListResourcesRequestSchema, async () => {
+  return {
+    resources: [
+      {
+        uri: "file:///logs/app.log",
+        name: "Application Logs",
+        mimeType: "text/plain"
+      }
+    ]
+  };
+});
+
+// Read resource contents
+server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+  const uri = request.params.uri;
+
+  if (uri === "file:///logs/app.log") {
+    const logContents = await readLogFile();
+    return {
+      contents: [
+        {
+          uri,
+          mimeType: "text/plain",
+          text: logContents
+        }
+      ]
+    };
+  }
+
+  throw new Error("Resource not found");
+});
+​
+Best practices
+When implementing resource support:
+
+Use clear, descriptive resource names and URIs
+Include helpful descriptions to guide LLM understanding
+Set appropriate MIME types when known
+Implement resource templates for dynamic content
+Use subscriptions for frequently changing resources
+Handle errors gracefully with clear error messages
+Consider pagination for large resource lists
+Cache resource contents when appropriate
+Validate URIs before processing
+Document your custom URI schemes
+​
+Security considerations
+When exposing resources:
+
+Validate all resource URIs
+Implement appropriate access controls
+Sanitize file paths to prevent directory traversal
+Be cautious with binary data handling
+Consider rate limiting for resource reads
+Audit resource access
+Encrypt sensitive data in transit
+Validate MIME types
+Implement timeouts for long-running reads
+Handle resource cleanup appropriately
+Was this page helpful?
+
+
+Yes
+
+No
+Core architecture
+Prompts
+github
+Concepts
+Prompts
+
+Copy page
+
+Create reusable prompt templates and workflows
+
+Prompts enable servers to define reusable prompt templates and workflows that clients can easily surface to users and LLMs. They provide a powerful way to standardize and share common LLM interactions.
+
+Prompts are designed to be user-controlled, meaning they are exposed from servers to clients with the intention of the user being able to explicitly select them for use.
+
+​
+Overview
+Prompts in MCP are predefined templates that can:
+
+Accept dynamic arguments
+Include context from resources
+Chain multiple interactions
+Guide specific workflows
+Surface as UI elements (like slash commands)
+​
+Prompt structure
+Each prompt is defined with:
+
+
+Copy
+{
+  name: string;              // Unique identifier for the prompt
+  description?: string;      // Human-readable description
+  arguments?: [              // Optional list of arguments
+    {
+      name: string;          // Argument identifier
+      description?: string;  // Argument description
+      required?: boolean;    // Whether argument is required
+    }
+  ]
+}
+​
+Discovering prompts
+Clients can discover available prompts by sending a prompts/list request:
+
+
+Copy
+// Request
+{
+  method: "prompts/list";
+}
+
+// Response
+{
+  prompts: [
+    {
+      name: "analyze-code",
+      description: "Analyze code for potential improvements",
+      arguments: [
+        {
+          name: "language",
+          description: "Programming language",
+          required: true,
+        },
+      ],
+    },
+  ];
+}
+​
+Using prompts
+To use a prompt, clients make a prompts/get request:
+
+
+Copy
+// Request
+{
+  method: "prompts/get",
+  params: {
+    name: "analyze-code",
+    arguments: {
+      language: "python"
+    }
+  }
+}
+
+// Response
+{
+  description: "Analyze Python code for potential improvements",
+  messages: [
+    {
+      role: "user",
+      content: {
+        type: "text",
+        text: "Please analyze the following Python code for potential improvements:\n\n```python\ndef calculate_sum(numbers):\n    total = 0\n    for num in numbers:\n        total = total + num\n    return total\n\nresult = calculate_sum([1, 2, 3, 4, 5])\nprint(result)\n```"
+      }
+    }
+  ]
+}
+​
+Dynamic prompts
+Prompts can be dynamic and include:
+
+​
+Embedded resource context
+
+Copy
+{
+  "name": "analyze-project",
+  "description": "Analyze project logs and code",
+  "arguments": [
+    {
+      "name": "timeframe",
+      "description": "Time period to analyze logs",
+      "required": true
+    },
+    {
+      "name": "fileUri",
+      "description": "URI of code file to review",
+      "required": true
+    }
+  ]
+}
+When handling the prompts/get request:
+
+
+Copy
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": {
+        "type": "text",
+        "text": "Analyze these system logs and the code file for any issues:"
+      }
+    },
+    {
+      "role": "user",
+      "content": {
+        "type": "resource",
+        "resource": {
+          "uri": "logs://recent?timeframe=1h",
+          "text": "[2024-03-14 15:32:11] ERROR: Connection timeout in network.py:127\n[2024-03-14 15:32:15] WARN: Retrying connection (attempt 2/3)\n[2024-03-14 15:32:20] ERROR: Max retries exceeded",
+          "mimeType": "text/plain"
+        }
+      }
+    },
+    {
+      "role": "user",
+      "content": {
+        "type": "resource",
+        "resource": {
+          "uri": "file:///path/to/code.py",
+          "text": "def connect_to_service(timeout=30):\n    retries = 3\n    for attempt in range(retries):\n        try:\n            return establish_connection(timeout)\n        except TimeoutError:\n            if attempt == retries - 1:\n                raise\n            time.sleep(5)\n\ndef establish_connection(timeout):\n    # Connection implementation\n    pass",
+          "mimeType": "text/x-python"
+        }
+      }
+    }
+  ]
+}
+​
+Multi-step workflows
+
+Copy
+const debugWorkflow = {
+  name: "debug-error",
+  async getMessages(error: string) {
+    return [
+      {
+        role: "user",
+        content: {
+          type: "text",
+          text: `Here's an error I'm seeing: ${error}`,
+        },
+      },
+      {
+        role: "assistant",
+        content: {
+          type: "text",
+          text: "I'll help analyze this error. What have you tried so far?",
+        },
+      },
+      {
+        role: "user",
+        content: {
+          type: "text",
+          text: "I've tried restarting the service, but the error persists.",
+        },
+      },
+    ];
+  },
+};
+​
+Example implementation
+Here’s a complete example of implementing prompts in an MCP server:
+
+TypeScript
+Python
+
+Copy
+import { Server } from "@modelcontextprotocol/sdk/server";
+import {
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema
+} from "@modelcontextprotocol/sdk/types";
+
+const PROMPTS = {
+  "git-commit": {
+    name: "git-commit",
+    description: "Generate a Git commit message",
+    arguments: [
+      {
+        name: "changes",
+        description: "Git diff or description of changes",
+        required: true
+      }
+    ]
+  },
+  "explain-code": {
+    name: "explain-code",
+    description: "Explain how code works",
+    arguments: [
+      {
+        name: "code",
+        description: "Code to explain",
+        required: true
+      },
+      {
+        name: "language",
+        description: "Programming language",
+        required: false
+      }
+    ]
+  }
+};
+
+const server = new Server({
+  name: "example-prompts-server",
+  version: "1.0.0"
+}, {
+  capabilities: {
+    prompts: {}
+  }
+});
+
+// List available prompts
+server.setRequestHandler(ListPromptsRequestSchema, async () => {
+  return {
+    prompts: Object.values(PROMPTS)
+  };
+});
+
+// Get specific prompt
+server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+  const prompt = PROMPTS[request.params.name];
+  if (!prompt) {
+    throw new Error(`Prompt not found: ${request.params.name}`);
+  }
+
+  if (request.params.name === "git-commit") {
+    return {
+      messages: [
+        {
+          role: "user",
+          content: {
+            type: "text",
+            text: `Generate a concise but descriptive commit message for these changes:\n\n${request.params.arguments?.changes}`
+          }
+        }
+      ]
+    };
+  }
+
+  if (request.params.name === "explain-code") {
+    const language = request.params.arguments?.language || "Unknown";
+    return {
+      messages: [
+        {
+          role: "user",
+          content: {
+            type: "text",
+            text: `Explain how this ${language} code works:\n\n${request.params.arguments?.code}`
+          }
+        }
+      ]
+    };
+  }
+
+  throw new Error("Prompt implementation not found");
+});
+​
+Best practices
+When implementing prompts:
+
+Use clear, descriptive prompt names
+Provide detailed descriptions for prompts and arguments
+Validate all required arguments
+Handle missing arguments gracefully
+Consider versioning for prompt templates
+Cache dynamic content when appropriate
+Implement error handling
+Document expected argument formats
+Consider prompt composability
+Test prompts with various inputs
+​
+UI integration
+Prompts can be surfaced in client UIs as:
+
+Slash commands
+Quick actions
+Context menu items
+Command palette entries
+Guided workflows
+Interactive forms
+​
+Updates and changes
+Servers can notify clients about prompt changes:
+
+Server capability: prompts.listChanged
+Notification: notifications/prompts/list_changed
+Client re-fetches prompt list
+​
+Security considerations
+When implementing prompts:
+
+Validate all arguments
+Sanitize user input
+Consider rate limiting
+Implement access controls
+Audit prompt usage
+Handle sensitive data appropriately
+Validate generated content
+Implement timeouts
+Consider prompt injection risks
+Document security requirements
+Was this page helpful?
+
+
+Yes
+
+No
+Resources
+Tools
+github
+
+Concepts
+Tools
+
+Copy page
+
+Enable LLMs to perform actions through your server
+
+Tools are a powerful primitive in the Model Context Protocol (MCP) that enable servers to expose executable functionality to clients. Through tools, LLMs can interact with external systems, perform computations, and take actions in the real world.
+
+Tools are designed to be model-controlled, meaning that tools are exposed from servers to clients with the intention of the AI model being able to automatically invoke them (with a human in the loop to grant approval).
+
+​
+Overview
+Tools in MCP allow servers to expose executable functions that can be invoked by clients and used by LLMs to perform actions. Key aspects of tools include:
+
+Discovery: Clients can obtain a list of available tools by sending a tools/list request
+Invocation: Tools are called using the tools/call request, where servers perform the requested operation and return results
+Flexibility: Tools can range from simple calculations to complex API interactions
+Like resources, tools are identified by unique names and can include descriptions to guide their usage. However, unlike resources, tools represent dynamic operations that can modify state or interact with external systems.
+
+​
+Tool definition structure
+Each tool is defined with the following structure:
+
+
+Copy
+{
+  name: string;          // Unique identifier for the tool
+  description?: string;  // Human-readable description
+  inputSchema: {         // JSON Schema for the tool's parameters
+    type: "object",
+    properties: { ... }  // Tool-specific parameters
+  },
+  annotations?: {        // Optional hints about tool behavior
+    title?: string;      // Human-readable title for the tool
+    readOnlyHint?: boolean;    // If true, the tool does not modify its environment
+    destructiveHint?: boolean; // If true, the tool may perform destructive updates
+    idempotentHint?: boolean;  // If true, repeated calls with same args have no additional effect
+    openWorldHint?: boolean;   // If true, tool interacts with external entities
+  }
+}
+​
+Implementing tools
+Here’s an example of implementing a basic tool in an MCP server:
+
+TypeScript
+Python
+
+Copy
+const server = new Server({
+  name: "example-server",
+  version: "1.0.0"
+}, {
+  capabilities: {
+    tools: {}
+  }
+});
+
+// Define available tools
+server.setRequestHandler(ListToolsRequestSchema, async () => {
+  return {
+    tools: [{
+      name: "calculate_sum",
+      description: "Add two numbers together",
+      inputSchema: {
+        type: "object",
+        properties: {
+          a: { type: "number" },
+          b: { type: "number" }
+        },
+        required: ["a", "b"]
+      }
+    }]
+  };
+});
+
+// Handle tool execution
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  if (request.params.name === "calculate_sum") {
+    const { a, b } = request.params.arguments;
+    return {
+      content: [
+        {
+          type: "text",
+          text: String(a + b)
+        }
+      ]
+    };
+  }
+  throw new Error("Tool not found");
+});
+​
+Example tool patterns
+Here are some examples of types of tools that a server could provide:
+
+​
+System operations
+Tools that interact with the local system:
+
+
+Copy
+{
+  name: "execute_command",
+  description: "Run a shell command",
+  inputSchema: {
+    type: "object",
+    properties: {
+      command: { type: "string" },
+      args: { type: "array", items: { type: "string" } }
+    }
+  }
+}
+​
+API integrations
+Tools that wrap external APIs:
+
+
+Copy
+{
+  name: "github_create_issue",
+  description: "Create a GitHub issue",
+  inputSchema: {
+    type: "object",
+    properties: {
+      title: { type: "string" },
+      body: { type: "string" },
+      labels: { type: "array", items: { type: "string" } }
+    }
+  }
+}
+​
+Data processing
+Tools that transform or analyze data:
+
+
+Copy
+{
+  name: "analyze_csv",
+  description: "Analyze a CSV file",
+  inputSchema: {
+    type: "object",
+    properties: {
+      filepath: { type: "string" },
+      operations: {
+        type: "array",
+        items: {
+          enum: ["sum", "average", "count"]
+        }
+      }
+    }
+  }
+}
+​
+Best practices
+When implementing tools:
+
+Provide clear, descriptive names and descriptions
+Use detailed JSON Schema definitions for parameters
+Include examples in tool descriptions to demonstrate how the model should use them
+Implement proper error handling and validation
+Use progress reporting for long operations
+Keep tool operations focused and atomic
+Document expected return value structures
+Implement proper timeouts
+Consider rate limiting for resource-intensive operations
+Log tool usage for debugging and monitoring
+​
+Tool name conflicts
+MCP client applications and MCP server proxies may encounter tool name conflicts when building their own tool lists. For example, two connected MCP servers web1 and web2 may both expose a tool named search_web.
+
+Applications may disambiguiate tools with one of the following strategies (among others; not an exhaustive list):
+
+Concatenating a unique, user-defined server name with the tool name, e.g. web1___search_web and web2___search_web. This strategy may be preferable when unique server names are already provided by the user in a configuration file.
+Generating a random prefix for the tool name, e.g. jrwxs___search_web and 6cq52___search_web. This strategy may be preferable in server proxies where user-defined unique names are not available.
+Using the server URI as a prefix for the tool name, e.g. web1.example.com:search_web and web2.example.com:search_web. This strategy may be suitable when working with remote MCP servers.
+Note that the server-provided name from the initialization flow is not guaranteed to be unique and is not generally suitable for disambiguation purposes.
+
+​
+Security considerations
+When exposing tools:
+
+​
+Input validation
+Validate all parameters against the schema
+Sanitize file paths and system commands
+Validate URLs and external identifiers
+Check parameter sizes and ranges
+Prevent command injection
+​
+Access control
+Implement authentication where needed
+Use appropriate authorization checks
+Audit tool usage
+Rate limit requests
+Monitor for abuse
+​
+Error handling
+Don’t expose internal errors to clients
+Log security-relevant errors
+Handle timeouts appropriately
+Clean up resources after errors
+Validate return values
+​
+Tool discovery and updates
+MCP supports dynamic tool discovery:
+
+Clients can list available tools at any time
+Servers can notify clients when tools change using notifications/tools/list_changed
+Tools can be added or removed during runtime
+Tool definitions can be updated (though this should be done carefully)
+​
+Error handling
+Tool errors should be reported within the result object, not as MCP protocol-level errors. This allows the LLM to see and potentially handle the error. When a tool encounters an error:
+
+Set isError to true in the result
+Include error details in the content array
+Here’s an example of proper error handling for tools:
+
+TypeScript
+Python
+
+Copy
+try {
+  // Tool operation
+  const result = performOperation();
+  return {
+    content: [
+      {
+        type: "text",
+        text: `Operation successful: ${result}`
+      }
+    ]
+  };
+} catch (error) {
+  return {
+    isError: true,
+    content: [
+      {
+        type: "text",
+        text: `Error: ${error.message}`
+      }
+    ]
+  };
+}
+This approach allows the LLM to see that an error occurred and potentially take corrective action or request human intervention.
+
+​
+Tool annotations
+Tool annotations provide additional metadata about a tool’s behavior, helping clients understand how to present and manage tools. These annotations are hints that describe the nature and impact of a tool, but should not be relied upon for security decisions.
+
+​
+Purpose of tool annotations
+Tool annotations serve several key purposes:
+
+Provide UX-specific information without affecting model context
+Help clients categorize and present tools appropriately
+Convey information about a tool’s potential side effects
+Assist in developing intuitive interfaces for tool approval
+​
+Available tool annotations
+The MCP specification defines the following annotations for tools:
+
+Annotation	Type	Default	Description
+title	string	-	A human-readable title for the tool, useful for UI display
+readOnlyHint	boolean	false	If true, indicates the tool does not modify its environment
+destructiveHint	boolean	true	If true, the tool may perform destructive updates (only meaningful when readOnlyHint is false)
+idempotentHint	boolean	false	If true, calling the tool repeatedly with the same arguments has no additional effect (only meaningful when readOnlyHint is false)
+openWorldHint	boolean	true	If true, the tool may interact with an “open world” of external entities
+​
+Example usage
+Here’s how to define tools with annotations for different scenarios:
+
+
+Copy
+// A read-only search tool
+{
+  name: "web_search",
+  description: "Search the web for information",
+  inputSchema: {
+    type: "object",
+    properties: {
+      query: { type: "string" }
+    },
+    required: ["query"]
+  },
+  annotations: {
+    title: "Web Search",
+    readOnlyHint: true,
+    openWorldHint: true
+  }
+}
+
+// A destructive file deletion tool
+{
+  name: "delete_file",
+  description: "Delete a file from the filesystem",
+  inputSchema: {
+    type: "object",
+    properties: {
+      path: { type: "string" }
+    },
+    required: ["path"]
+  },
+  annotations: {
+    title: "Delete File",
+    readOnlyHint: false,
+    destructiveHint: true,
+    idempotentHint: true,
+    openWorldHint: false
+  }
+}
+
+// A non-destructive database record creation tool
+{
+  name: "create_record",
+  description: "Create a new record in the database",
+  inputSchema: {
+    type: "object",
+    properties: {
+      table: { type: "string" },
+      data: { type: "object" }
+    },
+    required: ["table", "data"]
+  },
+  annotations: {
+    title: "Create Database Record",
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: false
+  }
+}
+​
+Integrating annotations in server implementation
+TypeScript
+Python
+
+Copy
+server.setRequestHandler(ListToolsRequestSchema, async () => {
+  return {
+    tools: [{
+      name: "calculate_sum",
+      description: "Add two numbers together",
+      inputSchema: {
+        type: "object",
+        properties: {
+          a: { type: "number" },
+          b: { type: "number" }
+        },
+        required: ["a", "b"]
+      },
+      annotations: {
+        title: "Calculate Sum",
+        readOnlyHint: true,
+        openWorldHint: false
+      }
+    }]
+  };
+});
+​
+Best practices for tool annotations
+Be accurate about side effects: Clearly indicate whether a tool modifies its environment and whether those modifications are destructive.
+
+Use descriptive titles: Provide human-friendly titles that clearly describe the tool’s purpose.
+
+Indicate idempotency properly: Mark tools as idempotent only if repeated calls with the same arguments truly have no additional effect.
+
+Set appropriate open/closed world hints: Indicate whether a tool interacts with a closed system (like a database) or an open system (like the web).
+
+Remember annotations are hints: All properties in ToolAnnotations are hints and not guaranteed to provide a faithful description of tool behavior. Clients should never make security-critical decisions based solely on annotations.
+
+​
+Testing tools
+A comprehensive testing strategy for MCP tools should cover:
+
+Functional testing: Verify tools execute correctly with valid inputs and handle invalid inputs appropriately
+Integration testing: Test tool interaction with external systems using both real and mocked dependencies
+Security testing: Validate authentication, authorization, input sanitization, and rate limiting
+Performance testing: Check behavior under load, timeout handling, and resource cleanup
+Error handling: Ensure tools properly report errors through the MCP protocol and clean up resources
+Was this page helpful?
+
+
+Yes
+
+No
+
+Sampling
+
+Copy page
+
+Let your servers request completions from LLMs
+
+Sampling is a powerful MCP feature that allows servers to request LLM completions through the client, enabling sophisticated agentic behaviors while maintaining security and privacy.
+
+This feature of MCP is not yet supported in the Claude Desktop client.
+
+​
+How sampling works
+The sampling flow follows these steps:
+
+Server sends a sampling/createMessage request to the client
+Client reviews the request and can modify it
+Client samples from an LLM
+Client reviews the completion
+Client returns the result to the server
+This human-in-the-loop design ensures users maintain control over what the LLM sees and generates.
+
+​
+Message format
+Sampling requests use a standardized message format:
+
+
+Copy
+{
+  messages: [
+    {
+      role: "user" | "assistant",
+      content: {
+        type: "text" | "image",
+
+        // For text:
+        text?: string,
+
+        // For images:
+        data?: string,             // base64 encoded
+        mimeType?: string
+      }
+    }
+  ],
+  modelPreferences?: {
+    hints?: [{
+      name?: string                // Suggested model name/family
+    }],
+    costPriority?: number,         // 0-1, importance of minimizing cost
+    speedPriority?: number,        // 0-1, importance of low latency
+    intelligencePriority?: number  // 0-1, importance of capabilities
+  },
+  systemPrompt?: string,
+  includeContext?: "none" | "thisServer" | "allServers",
+  temperature?: number,
+  maxTokens: number,
+  stopSequences?: string[],
+  metadata?: Record<string, unknown>
+}
+​
+Request parameters
+​
+Messages
+The messages array contains the conversation history to send to the LLM. Each message has:
+
+role: Either “user” or “assistant”
+content: The message content, which can be:
+Text content with a text field
+Image content with data (base64) and mimeType fields
+​
+Model preferences
+The modelPreferences object allows servers to specify their model selection preferences:
+
+hints: Array of model name suggestions that clients can use to select an appropriate model:
+
+name: String that can match full or partial model names (e.g. “claude-3”, “sonnet”)
+Clients may map hints to equivalent models from different providers
+Multiple hints are evaluated in preference order
+Priority values (0-1 normalized):
+
+costPriority: Importance of minimizing costs
+speedPriority: Importance of low latency response
+intelligencePriority: Importance of advanced model capabilities
+Clients make the final model selection based on these preferences and their available models.
+
+​
+System prompt
+An optional systemPrompt field allows servers to request a specific system prompt. The client may modify or ignore this.
+
+​
+Context inclusion
+The includeContext parameter specifies what MCP context to include:
+
+"none": No additional context
+"thisServer": Include context from the requesting server
+"allServers": Include context from all connected MCP servers
+The client controls what context is actually included.
+
+​
+Sampling parameters
+Fine-tune the LLM sampling with:
+
+temperature: Controls randomness (0.0 to 1.0)
+maxTokens: Maximum tokens to generate
+stopSequences: Array of sequences that stop generation
+metadata: Additional provider-specific parameters
+​
+Response format
+The client returns a completion result:
+
+
+Copy
+{
+  model: string,  // Name of the model used
+  stopReason?: "endTurn" | "stopSequence" | "maxTokens" | string,
+  role: "user" | "assistant",
+  content: {
+    type: "text" | "image",
+    text?: string,
+    data?: string,
+    mimeType?: string
+  }
+}
+​
+Example request
+Here’s an example of requesting sampling from a client:
+
+
+Copy
+{
+  "method": "sampling/createMessage",
+  "params": {
+    "messages": [
+      {
+        "role": "user",
+        "content": {
+          "type": "text",
+          "text": "What files are in the current directory?"
+        }
+      }
+    ],
+    "systemPrompt": "You are a helpful file system assistant.",
+    "includeContext": "thisServer",
+    "maxTokens": 100
+  }
+}
+​
+Best practices
+When implementing sampling:
+
+Always provide clear, well-structured prompts
+Handle both text and image content appropriately
+Set reasonable token limits
+Include relevant context through includeContext
+Validate responses before using them
+Handle errors gracefully
+Consider rate limiting sampling requests
+Document expected sampling behavior
+Test with various model parameters
+Monitor sampling costs
+​
+Human in the loop controls
+Sampling is designed with human oversight in mind:
+
+​
+For prompts
+Clients should show users the proposed prompt
+Users should be able to modify or reject prompts
+System prompts can be filtered or modified
+Context inclusion is controlled by the client
+​
+For completions
+Clients should show users the completion
+Users should be able to modify or reject completions
+Clients can filter or modify completions
+Users control which model is used
+​
+Security considerations
+When implementing sampling:
+
+Validate all message content
+Sanitize sensitive information
+Implement appropriate rate limits
+Monitor sampling usage
+Encrypt data in transit
+Handle user data privacy
+Audit sampling requests
+Control cost exposure
+Implement timeouts
+Handle model errors gracefully
+​
+Common patterns
+​
+Agentic workflows
+Sampling enables agentic patterns like:
+
+Reading and analyzing resources
+Making decisions based on context
+Generating structured data
+Handling multi-step tasks
+Providing interactive assistance
+​
+Context management
+Best practices for context:
+
+Request minimal necessary context
+Structure context clearly
+Handle context size limits
+Update context as needed
+Clean up stale context
+​
+Error handling
+Robust error handling should:
+
+Catch sampling failures
+Handle timeout errors
+Manage rate limits
+Validate responses
+Provide fallback behaviors
+Log errors appropriately
+​
+Limitations
+Be aware of these limitations:
+
+Sampling depends on client capabilities
+Users control sampling behavior
+Context size has limits
+Rate limits may apply
+Costs should be considered
+Model availability varies
+Response times vary
+Not all content types supported
+Was this page helpful?
+
+
+Yes
+
+No
+Tools
+Roots
+github
+
+Roots
+
+Copy page
+
+Understanding roots in MCP
+
+Roots are a concept in MCP that define the boundaries where servers can operate. They provide a way for clients to inform servers about relevant resources and their locations.
+
+​
+What are Roots?
+A root is a URI that a client suggests a server should focus on. When a client connects to a server, it declares which roots the server should work with. While primarily used for filesystem paths, roots can be any valid URI including HTTP URLs.
+
+For example, roots could be:
+
+
+Copy
+file:///home/user/projects/myapp
+https://api.example.com/v1
+​
+Why Use Roots?
+Roots serve several important purposes:
+
+Guidance: They inform servers about relevant resources and locations
+Clarity: Roots make it clear which resources are part of your workspace
+Organization: Multiple roots let you work with different resources simultaneously
+​
+How Roots Work
+When a client supports roots, it:
+
+Declares the roots capability during connection
+Provides a list of suggested roots to the server
+Notifies the server when roots change (if supported)
+While roots are informational and not strictly enforcing, servers should:
+
+Respect the provided roots
+Use root URIs to locate and access resources
+Prioritize operations within root boundaries
+​
+Common Use Cases
+Roots are commonly used to define:
+
+Project directories
+Repository locations
+API endpoints
+Configuration locations
+Resource boundaries
+​
+Best Practices
+When working with roots:
+
+Only suggest necessary resources
+Use clear, descriptive names for roots
+Monitor root accessibility
+Handle root changes gracefully
+​
+Example
+Here’s how a typical MCP client might expose roots:
+
+
+Copy
+{
+  "roots": [
+    {
+      "uri": "file:///home/user/projects/frontend",
+      "name": "Frontend Repository"
+    },
+    {
+      "uri": "https://api.example.com/v1",
+      "name": "API Endpoint"
+    }
+  ]
+}
+This configuration suggests the server focus on both a local repository and an API endpoint while keeping them logically separated.
+
+Was this page helpful?
+
+
+Yes
+
+No
+Sampling
+
+
+Elicitation
+
+Copy page
+
+Interactive information gathering in MCP
+
+Elicitation is a powerful MCP feature that allows servers to request additional information from users during interactions. This enables dynamic workflows where servers can gather necessary data on-demand while maintaining user control and privacy.
+
+Elicitation is newly introduced in the MCP specification revision 2025-06-18.
+
+​
+What is Elicitation?
+Elicitation provides a standardized way for MCP servers to request structured information from users through the client. Instead of requiring all information upfront, servers can ask for specific data exactly when needed, creating more natural and flexible interactions.
+
+For example, a server might:
+
+Request a username when connecting to a service
+Ask for configuration preferences during setup
+Gather project details when creating new resources
+​
+How Elicitation Works
+The elicitation flow is straightforward:
+
+Server sends an elicitation request with a message and expected data structure
+Client presents the request to the user with appropriate UI
+User accepts, declines, or cancels the request
+Client validates and returns the response to the server
+Server continues processing with the provided information
+​
+Request Structure
+Elicitation requests include two key components:
+
+​
+Message
+A clear, human-readable explanation of what information is needed and why.
+
+​
+Schema
+A JSON Schema that defines the expected structure of the response. The schema is intentionally limited to flat objects with primitive types to simplify client implementation.
+
+Example request:
+
+
+Copy
+{
+  "message": "Please provide your GitHub username",
+  "requestedSchema": {
+    "type": "object",
+    "properties": {
+      "username": {
+        "type": "string",
+        "title": "GitHub Username",
+        "description": "Your GitHub username (e.g., octocat)"
+      }
+    },
+    "required": ["username"]
+  }
+}
+​
+Supported Data Types
+Elicitation supports these primitive types:
+
+​
+Text Input
+
+Copy
+{
+  "type": "string",
+  "title": "Project Name",
+  "description": "Name for your new project",
+  "minLength": 3,
+  "maxLength": 50
+}
+​
+Numbers
+
+Copy
+{
+  "type": "number",
+  "title": "Port Number",
+  "description": "Port to run the server on",
+  "minimum": 1024,
+  "maximum": 65535
+}
+​
+Boolean Choices
+
+Copy
+{
+  "type": "boolean",
+  "title": "Enable Analytics",
+  "description": "Send anonymous usage statistics",
+  "default": false
+}
+​
+Selection Lists
+
+Copy
+{
+  "type": "string",
+  "title": "Environment",
+  "enum": ["development", "staging", "production"],
+  "enumNames": ["Development", "Staging", "Production"]
+}
+​
+User Response Actions
+Users can respond to elicitation requests in three ways:
+
+Accept: User provides the requested information
+Decline: User explicitly refuses to provide information
+Cancel: User dismisses without making a choice (e.g., closes dialog)
+Servers should handle each response appropriately:
+
+Accept → Process the provided data
+Decline → Offer alternatives or adjust workflow
+Cancel → Consider retrying later or using defaults
+​
+Best Practices
+When implementing elicitation:
+
+​
+For Servers
+Be Clear: Write descriptive messages explaining why information is needed
+Be Minimal: Only request essential information
+Be Flexible: Have fallbacks for declined or cancelled requests
+Be Timely: Request information when actually needed, not preemptively
+Be Respectful: Never request sensitive information like passwords or tokens
+​
+For Clients
+Be Transparent: Clearly show which server is requesting information
+Be Protective: Allow users to review and modify responses
+Be Validating: Check responses against the provided schema
+Be Empowering: Make decline and cancel options prominent
+Be Limiting: Implement rate limiting to prevent spam
+​
+Common Use Cases
+Elicitation excels in scenarios like:
+
+Initial Setup: Gathering configuration during first-time setup
+Dynamic Workflows: Requesting context-specific information
+User Preferences: Collecting optional settings and preferences
+Project Details: Gathering metadata about resources being created
+Service Integration: Requesting usernames or IDs for external services
+​
+Example Workflow
+Here’s a typical elicitation interaction:
+
+Server
+Client
+User
+Server
+Client
+User
+Server initiates elicitation
+Human interaction
+Complete request
+Continue processing with new information
+elicitation/create
+Present elicitation UI
+Provide requested information
+Return user response
+​
+Security Considerations
+Servers must never use elicitation to request passwords, API keys, tokens, or other sensitive credentials. Use proper authentication flows instead.
+
+Key security guidelines:
+
+Servers should only request non-sensitive information
+Clients should clearly indicate which server is requesting data
+Users should always have the option to decline
+Responses should be validated against the schema
+Rate limiting should prevent request flooding
+​
+Implementation Example
+Here’s how a server might use elicitation to gather project information:
+
+
+Copy
+// Server requests project details
+const response = await client.request("elicitation/create", {
+  message: "Let's set up your new project",
+  requestedSchema: {
+    type: "object",
+    properties: {
+      name: {
+        type: "string",
+        title: "Project Name",
+        description: "A descriptive name for your project",
+      },
+      framework: {
+        type: "string",
+        title: "Framework",
+        enum: ["react", "vue", "angular", "none"],
+        enumNames: ["React", "Vue", "Angular", "None"],
+      },
+      useTypeScript: {
+        type: "boolean",
+        title: "Use TypeScript",
+        default: true,
+      },
+    },
+    required: ["name", "framework"],
+  },
+});
+
+// Handle the response
+if (response.action === "accept") {
+  // Create project with provided details
+  await createProject(response.content);
+} else if (response.action === "decline") {
+  // Use defaults or offer alternatives
+  await createDefaultProject();
+} else {
+  // User cancelled - perhaps retry later
+  console.log("Project creation cancelled");
+}
+This approach creates a smooth, interactive experience while respecting user control and privacy.
+
+Was this page helpful?
+
+
+Yes
+
+No
+Concepts
+Transports
+
+Copy page
+
+Learn about MCP’s communication mechanisms
+
+Transports in the Model Context Protocol (MCP) provide the foundation for communication between clients and servers. A transport handles the underlying mechanics of how messages are sent and received.
+
+​
+Message Format
+MCP uses JSON-RPC 2.0 as its wire format. The transport layer is responsible for converting MCP protocol messages into JSON-RPC format for transmission and converting received JSON-RPC messages back into MCP protocol messages.
+
+There are three types of JSON-RPC messages used:
+
+​
+Requests
+
+Copy
+{
+  jsonrpc: "2.0",
+  id: number | string,
+  method: string,
+  params?: object
+}
+​
+Responses
+
+Copy
+{
+  jsonrpc: "2.0",
+  id: number | string,
+  result?: object,
+  error?: {
+    code: number,
+    message: string,
+    data?: unknown
+  }
+}
+​
+Notifications
+
+Copy
+{
+  jsonrpc: "2.0",
+  method: string,
+  params?: object
+}
+​
+Built-in Transport Types
+MCP currently defines two standard transport mechanisms:
+
+​
+Standard Input/Output (stdio)
+The stdio transport enables communication through standard input and output streams. This is particularly useful for local integrations and command-line tools.
+
+Use stdio when:
+
+Building command-line tools
+Implementing local integrations
+Needing simple process communication
+Working with shell scripts
+TypeScript (Server)
+TypeScript (Client)
+Python (Server)
+Python (Client)
+
+Copy
+const server = new Server({
+  name: "example-server",
+  version: "1.0.0"
+}, {
+  capabilities: {}
+});
+
+const transport = new StdioServerTransport();
+await server.connect(transport);
+​
+Streamable HTTP
+The Streamable HTTP transport uses HTTP POST requests for client-to-server communication and optional Server-Sent Events (SSE) streams for server-to-client communication.
+
+Use Streamable HTTP when:
+
+Building web-based integrations
+Needing client-server communication over HTTP
+Requiring stateful sessions
+Supporting multiple concurrent clients
+Implementing resumable connections
+​
+How it Works
+Client-to-Server Communication: Every JSON-RPC message from client to server is sent as a new HTTP POST request to the MCP endpoint
+Server Responses: The server can respond either with:
+A single JSON response (Content-Type: application/json)
+An SSE stream (Content-Type: text/event-stream) for multiple messages
+Server-to-Client Communication: Servers can send requests/notifications to clients via:
+SSE streams initiated by client requests
+SSE streams from HTTP GET requests to the MCP endpoint
+TypeScript (Server)
+TypeScript (Client)
+Python (Server)
+Python (Client)
+
+Copy
+import express from "express";
+
+const app = express();
+
+const server = new Server({
+  name: "example-server",
+  version: "1.0.0"
+}, {
+  capabilities: {}
+});
+
+// MCP endpoint handles both POST and GET
+app.post("/mcp", async (req, res) => {
+  // Handle JSON-RPC request
+  const response = await server.handleRequest(req.body);
+
+  // Return single response or SSE stream
+  if (needsStreaming) {
+    res.setHeader("Content-Type", "text/event-stream");
+    // Send SSE events...
+  } else {
+    res.json(response);
+  }
+});
+
+app.get("/mcp", (req, res) => {
+  // Optional: Support server-initiated SSE streams
+  res.setHeader("Content-Type", "text/event-stream");
+  // Send server notifications/requests...
+});
+
+app.listen(3000);
+​
+Session Management
+Streamable HTTP supports stateful sessions to maintain context across multiple requests:
+
+Session Initialization: Servers may assign a session ID during initialization by including it in an Mcp-Session-Id header
+Session Persistence: Clients must include the session ID in all subsequent requests using the Mcp-Session-Id header
+Session Termination: Sessions can be explicitly terminated by sending an HTTP DELETE request with the session ID
+Example session flow:
+
+
+Copy
+// Server assigns session ID during initialization
+app.post("/mcp", (req, res) => {
+  if (req.body.method === "initialize") {
+    const sessionId = generateSecureId();
+    res.setHeader("Mcp-Session-Id", sessionId);
+    // Store session state...
+  }
+  // Handle request...
+});
+
+// Client includes session ID in subsequent requests
+fetch("/mcp", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Mcp-Session-Id": sessionId,
+  },
+  body: JSON.stringify(request),
+});
+​
+Resumability and Redelivery
+To support resuming broken connections, Streamable HTTP provides:
+
+Event IDs: Servers can attach unique IDs to SSE events for tracking
+Resume from Last Event: Clients can resume by sending the Last-Event-ID header
+Message Replay: Servers can replay missed messages from the disconnection point
+This ensures reliable message delivery even with unstable network connections.
+
+​
+Security Considerations
+When implementing Streamable HTTP transport, follow these security best practices:
+
+Validate Origin Headers: Always validate the Origin header on all incoming connections to prevent DNS rebinding attacks
+Bind to Localhost: When running locally, bind only to localhost (127.0.0.1) rather than all network interfaces (0.0.0.0)
+Implement Authentication: Use proper authentication for all connections
+Use HTTPS: Always use TLS/HTTPS for production deployments
+Validate Session IDs: Ensure session IDs are cryptographically secure and properly validated
+Without these protections, attackers could use DNS rebinding to interact with local MCP servers from remote websites.
+
+​
+Server-Sent Events (SSE) - Deprecated
+SSE as a standalone transport is deprecated as of protocol version 2024-11-05. It has been replaced by Streamable HTTP, which incorporates SSE as an optional streaming mechanism. For backwards compatibility information, see the backwards compatibility section below.
+
+The legacy SSE transport enabled server-to-client streaming with HTTP POST requests for client-to-server communication.
+
+Previously used when:
+
+Only server-to-client streaming is needed
+Working with restricted networks
+Implementing simple updates
+​
+Legacy Security Considerations
+The deprecated SSE transport had similar security considerations to Streamable HTTP, particularly regarding DNS rebinding attacks. These same protections should be applied when using SSE streams within the Streamable HTTP transport.
+
+TypeScript (Server)
+TypeScript (Client)
+Python (Server)
+Python (Client)
+
+Copy
+import express from "express";
+
+const app = express();
+
+const server = new Server({
+  name: "example-server",
+  version: "1.0.0"
+}, {
+  capabilities: {}
+});
+
+let transport: SSEServerTransport | null = null;
+
+app.get("/sse", (req, res) => {
+  transport = new SSEServerTransport("/messages", res);
+  server.connect(transport);
+});
+
+app.post("/messages", (req, res) => {
+  if (transport) {
+    transport.handlePostMessage(req, res);
+  }
+});
+
+app.listen(3000);
+​
+Custom Transports
+MCP makes it easy to implement custom transports for specific needs. Any transport implementation just needs to conform to the Transport interface:
+
+You can implement custom transports for:
+
+Custom network protocols
+Specialized communication channels
+Integration with existing systems
+Performance optimization
+TypeScript
+Python
+
+Copy
+interface Transport {
+  // Start processing messages
+  start(): Promise<void>;
+
+  // Send a JSON-RPC message
+  send(message: JSONRPCMessage): Promise<void>;
+
+  // Close the connection
+  close(): Promise<void>;
+
+  // Callbacks
+  onclose?: () => void;
+  onerror?: (error: Error) => void;
+  onmessage?: (message: JSONRPCMessage) => void;
+}
+​
+Error Handling
+Transport implementations should handle various error scenarios:
+
+Connection errors
+Message parsing errors
+Protocol errors
+Network timeouts
+Resource cleanup
+Example error handling:
+
+TypeScript
+Python
+
+Copy
+class ExampleTransport implements Transport {
+  async start() {
+    try {
+      // Connection logic
+    } catch (error) {
+      this.onerror?.(new Error(`Failed to connect: ${error}`));
+      throw error;
+    }
+  }
+
+  async send(message: JSONRPCMessage) {
+    try {
+      // Sending logic
+    } catch (error) {
+      this.onerror?.(new Error(`Failed to send message: ${error}`));
+      throw error;
+    }
+  }
+}
+​
+Best Practices
+When implementing or using MCP transport:
+
+Handle connection lifecycle properly
+Implement proper error handling
+Clean up resources on connection close
+Use appropriate timeouts
+Validate messages before sending
+Log transport events for debugging
+Implement reconnection logic when appropriate
+Handle backpressure in message queues
+Monitor connection health
+Implement proper security measures
+​
+Security Considerations
+When implementing transport:
+
+​
+Authentication and Authorization
+Implement proper authentication mechanisms
+Validate client credentials
+Use secure token handling
+Implement authorization checks
+​
+Data Security
+Use TLS for network transport
+Encrypt sensitive data
+Validate message integrity
+Implement message size limits
+Sanitize input data
+​
+Network Security
+Implement rate limiting
+Use appropriate timeouts
+Handle denial of service scenarios
+Monitor for unusual patterns
+Implement proper firewall rules
+For HTTP-based transports (including Streamable HTTP), validate Origin headers to prevent DNS rebinding attacks
+For local servers, bind only to localhost (127.0.0.1) instead of all interfaces (0.0.0.0)
+​
+Debugging Transport
+Tips for debugging transport issues:
+
+Enable debug logging
+Monitor message flow
+Check connection states
+Validate message formats
+Test error scenarios
+Use network analysis tools
+Implement health checks
+Monitor resource usage
+Test edge cases
+Use proper error tracking
+​
+Backwards Compatibility
+To maintain compatibility between different protocol versions:
+
+​
+For Servers Supporting Older Clients
+Servers wanting to support clients using the deprecated HTTP+SSE transport should:
+
+Host both the old SSE and POST endpoints alongside the new MCP endpoint
+Handle initialization requests on both endpoints
+Maintain separate handling logic for each transport type
+​
+For Clients Supporting Older Servers
+Clients wanting to support servers using the deprecated transport should:
+
+Accept server URLs that may use either transport
+Attempt to POST an InitializeRequest with proper Accept headers:
+If successful, use Streamable HTTP transport
+If it fails with 4xx status, fall back to legacy SSE transport
+Issue a GET request expecting an SSE stream with endpoint event for legacy servers
+Example compatibility detection:
+
+
+Copy
+async function detectTransport(serverUrl: string): Promise<TransportType> {
+  try {
+    // Try Streamable HTTP first
+    const response = await fetch(serverUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json, text/event-stream",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        method: "initialize",
+        params: {
+          /* ... */
+        },
+      }),
+    });
+
+    if (response.ok) {
+      return "streamable-http";
+    }
+  } catch (error) {
+    // Fall back to legacy SSE
+    const sseResponse = await fetch(serverUrl, {
+      method: "GET",
+      headers: { Accept: "text/event-stream" },
+    });
+
+    if (sseResponse.ok) {
+      return "legacy-sse";
+    }
+  }
+
+  throw new Error("Unsupported transport");
+}
+Was this page helpful?
+
+
+Yes
+
+
+Example Servers
+
+Copy page
+
+A list of example servers and implementations
+
+This page showcases various Model Context Protocol (MCP) servers that demonstrate the protocol’s capabilities and versatility. These servers enable Large Language Models (LLMs) to securely access tools and data sources.
+
+​
+Reference implementations
+These official reference servers demonstrate core MCP features and SDK usage:
+
+​
+Current reference servers
+Filesystem - Secure file operations with configurable access controls
+Fetch - Web content fetching and conversion optimized for LLM usage
+Memory - Knowledge graph-based persistent memory system
+Sequential Thinking - Dynamic problem-solving through thought sequences
+​
+Archived servers (historical reference)
+⚠️ Note: The following servers have been moved to the servers-archived repository and are no longer actively maintained. They are provided for historical reference only.
+
+​
+Data and file systems
+PostgreSQL - Read-only database access with schema inspection capabilities
+SQLite - Database interaction and business intelligence features
+Google Drive - File access and search capabilities for Google Drive
+​
+Development tools
+Git - Tools to read, search, and manipulate Git repositories
+GitHub - Repository management, file operations, and GitHub API integration
+GitLab - GitLab API integration enabling project management
+Sentry - Retrieving and analyzing issues from Sentry.io
+​
+Web and browser automation
+Brave Search - Web and local search using Brave’s Search API
+Puppeteer - Browser automation and web scraping capabilities
+​
+Productivity and communication
+Slack - Channel management and messaging capabilities
+Google Maps - Location services, directions, and place details
+​
+AI and specialized tools
+EverArt - AI image generation using various models
+AWS KB Retrieval - Retrieval from AWS Knowledge Base using Bedrock Agent Runtime
+​
+Official integrations
+Visit the MCP Servers Repository (Official Integrations section) for a list of MCP servers maintained by companies for their platforms.
+
+​
+Community implementations
+Visit the MCP Servers Repository (Community section) for a list of MCP servers maintained by community members.
+
+​
+Getting started
+​
+Using reference servers
+TypeScript-based servers can be used directly with npx:
+
+
+Copy
+npx -y @modelcontextprotocol/server-memory
+Python-based servers can be used with uvx (recommended) or pip:
+
+
+Copy
+# Using uvx
+uvx mcp-server-git
+
+# Using pip
+pip install mcp-server-git
+python -m mcp_server_git
+​
+Configuring with Claude
+To use an MCP server with Claude, add it to your configuration:
+
+
+Copy
+{
+  "mcpServers": {
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/path/to/allowed/files"
+      ]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "<YOUR_TOKEN>"
+      }
+    }
+  }
+}
+​
+Additional resources
+Visit the MCP Servers Repository (Resources section) for a collection of other resources and projects related to MCP.
+
+Visit our GitHub Discussions to engage with the MCP community.
+
+Was this page helpful?
+
+
+Yes
+
+No
+Transports
+
+
+Examples
+Example Clients
+
+Copy page
+
+A list of applications that support MCP integrations
+
+This page provides an overview of applications that support the Model Context Protocol (MCP). Each client may support different MCP features, allowing for varying levels of integration with MCP servers.
+
+​
+Feature support matrix
+Client	Resources	Prompts	Tools	Discovery	Sampling	Roots	Elicitation	Notes
+5ire	❌	❌	✅	❓	❌	❌	❓	Supports tools.
+AgentAI	❌	❌	✅	❓	❌	❌	❓	Agent Library written in Rust with tools support
+AgenticFlow	✅	✅	✅	✅	❌	❌	❓	Supports tools, prompts, and resources for no-code AI agents and multi-agent workflows.
+AIQL TUUI	✅	✅	✅	✅	✅	❌	❓	Supports tools, prompts, resources, and sampling for MCP servers via Multi-LLM APIs.
+Amazon Q CLI	❌	✅	✅	❓	❌	❌	❓	Supports prompts and tools.
+Amazon Q IDE	❌	❌	✅	❌	❌	❌	❓	Supports tools.
+Apify MCP Tester	❌	❌	✅	✅	❌	❌	❓	Supports remote MCP servers and tool discovery.
+Augment Code	❌	❌	✅	❌	❌	❌	❓	Supports tools in local and remote agents.
+BeeAI Framework	❌	❌	✅	❌	❌	❌	❓	Supports tools in agentic workflows.
+BoltAI	❌	❌	✅	❓	❌	❌	❓	Supports tools.
+ChatWise	❌	❌	✅	❌	❌	❌	❓	Supports tools.
+Claude.ai	✅	✅	✅	❌	❌	❌	❓	Supports tools, prompts, and resources for remote MCP servers.
+Claude Code	✅	✅	✅	❌	❌	✅	❓	Supports resources, prompts, tools, and roots
+Claude Desktop App	✅	✅	✅	❌	❌	❌	❓	Supports tools, prompts, and resources for local and remote MCP servers.
+Chorus	❌	❌	✅	❓	❌	❌	❓	Supports tools.
+Cline	✅	❌	✅	✅	❌	❌	❓	Supports tools and resources.
+CodeGPT	❌	❌	✅	❓	❌	❌	❓	Supports tools in VSCode and Jetbrains
+Continue	✅	✅	✅	❓	❌	❌	❓	Supports tools, prompts, and resources.
+Copilot-MCP	✅	❌	✅	❓	❌	❌	❓	Supports tools and resources.
+Cursor	❌	❌	✅	❌	❌	❌	❓	Supports tools.
+Daydreams Agents	✅	✅	✅	❌	❌	❌	❓	Support for drop in Servers to Daydreams agents
+Emacs Mcp	❌	❌	✅	❌	❌	❌	❓	Supports tools in Emacs.
+fast-agent	✅	✅	✅	✅	✅	✅	✅	Full multimodal MCP support, with end-to-end tests
+FLUJO	❌	❌	✅	❓	❌	❌	❓	Support for resources, Prompts and Roots are coming soon
+Genkit	⚠️	✅	✅	❓	❌	❌	❓	Supports resource list and lookup through tools.
+Glama	✅	✅	✅	❓	❌	❌	❓	Supports tools.
+GenAIScript	❌	❌	✅	❓	❌	❌	❓	Supports tools.
+Goose	❌	❌	✅	❓	❌	❌	❓	Supports tools.
+gptme	❌	❌	✅	❓	❌	❌	❓	Supports tools.
+HyperAgent	❌	❌	✅	❓	❌	❌	❓	Supports tools.
+JetBrains AI Assistant	❌	❌	✅	❌	❌	❌	❓	Supports tools for all JetBrains IDEs.
+Kilo Code	✅	❌	✅	✅	❌	❌	❓	Supports tools and resources.
+Klavis AI Slack/Discord/Web	✅	❌	✅	❓	❌	❌	❓	Supports tools and resources.
+LibreChat	❌	❌	✅	❓	❌	❌	❓	Supports tools for Agents
+Lutra	✅	✅	✅	❓	❌	❌	❓	Supports any MCP server for reusable playbook creation.
+mcp-agent	✅	✅	✅	❓	⚠️	✅	✅	Supports tools, prompts, resources, roots, server connection management, and agent workflows.
+mcp-client-chatbot	❌	❌	✅	❌	❌	❌	❓	Supports tools.
+mcp-use	✅	✅	✅	❓	❌	❌	❓	Support tools, resources, stdio & http connection, local llms-agents.
+MCPHub	✅	✅	✅	❓	❌	❌	❓	Supports tools, resources, and prompts in Neovim
+MCPOmni-Connect	✅	✅	✅	❓	✅	❌	❓	Supports tools with agentic mode, ReAct, and orchestrator capabilities.
+Memex	✅	✅	✅	❓	❌	❌	❓	Support tools. Also support building and testing MCP server, all-in-one desktop app.
+Microsoft Copilot Studio	❌	❌	✅	❓	❌	❌	❓	Supports tools
+MindPal	❌	❌	✅	❓	❌	❌	❓	Supports tools for no-code AI agents and multi-agent workflows.
+MooPoint	❌	❌	✅	❓	✅	❌	❓	Web-Hosted client with tool calling support
+Msty Studio	❌	❌	✅	❓	❌	❌	❓	Supports tools
+NVIDIA Agent Intelligence toolkit	❌	❌	✅	❓	❌	❌	❓	Supports tools in agentic workflows.
+OpenSumi	❌	❌	✅	❓	❌	❌	❓	Supports tools in OpenSumi
+oterm	❌	✅	✅	❓	✅	❌	❓	Supports tools, prompts and sampling for Ollama.
+Postman	✅	✅	✅	❓	❌	❌	❓	Supports tools, resources, prompts, and sampling
+RecurseChat	❌	❌	✅	❓	❌	❌	❓	Supports tools.
+Roo Code	✅	❌	✅	❓	❌	❌	❓	Supports tools and resources.
+Shortwave	❌	❌	✅	❓	❌	❌	❓	Supports tools.
+Slack MCP Client	❌	❌	✅	❓	❌	❌	❓	Supports tools and multiple servers.
+Sourcegraph Cody	✅	❌	❌	❓	❌	❌	❓	Supports resources through OpenCTX
+SpinAI	❌	❌	✅	❓	❌	❌	❓	Supports tools for Typescript AI Agents
+Superinterface	❌	❌	✅	❓	❌	❌	❓	Supports tools
+Superjoin	❌	❌	✅	❓	❌	❌	❓	Supports tools and multiple servers.
+systemprompt	✅	✅	✅	❓	✅	❌	❓	Supports tools, resources, prompts, and sampling.
+Tambo	❌	❌	✅	❓	❌	❌	❓	Supports tools and multiple servers, with authentication.
+Tencent CloudBase AI DevKit	❌	❌	✅	❓	❌	❌	❓	Supports tools
+TheiaAI/TheiaIDE	❌	❌	✅	❓	❌	❌	❓	Supports tools for Agents in Theia AI and the AI-powered Theia IDE
+Tome	❌	❌	✅	❓	❌	❌	❓	Supports tools, manages MCP servers.
+TypingMind App	❌	❌	✅	❓	❌	❌	❓	Supports tools at app-level (appear as plugins) or when assigned to Agents
+VS Code GitHub Copilot	✅	✅	✅	✅	✅	✅	✅	Supports dynamic tool/roots discovery, secure secret configuration, and explicit tool prompting
+Warp	✅	❌	✅	✅	❌	❌	❓	Supports tools, resources, and most of the discovery criteria
+WhatsMCP	❌	❌	✅	❌	❌	❌	❓	Supports tools for Remote MCP Servers in WhatsApp
+Windsurf Editor	❌	❌	✅	✅	❌	❌	❓	Supports tools with AI Flow for collaborative development.
+Witsy	❌	❌	✅	❓	❌	❌	❓	Supports tools in Witsy.
+Zed	❌	✅	❌	❌	❌	❌	❓	Prompts appear as slash commands
+Zencoder	❌	❌	✅	❌	❌	❌	❓	Supports tools
+​
+Client details
+​
+5ire
+5ire is an open source cross-platform desktop AI assistant that supports tools through MCP servers.
+
+Key features:
+
+Built-in MCP servers can be quickly enabled and disabled.
+Users can add more servers by modifying the configuration file.
+It is open-source and user-friendly, suitable for beginners.
+Future support for MCP will be continuously improved.
+​
+AgentAI
+AgentAI is a Rust library designed to simplify the creation of AI agents. The library includes seamless integration with MCP Servers.
+
+Example of MCP Server integration
+
+Key features:
+
+Multi-LLM – We support most LLM APIs (OpenAI, Anthropic, Gemini, Ollama, and all OpenAI API Compatible).
+Built-in support for MCP Servers.
+Create agentic flows in a type- and memory-safe language like Rust.
+​
+AgenticFlow
+AgenticFlow is a no-code AI platform that helps you build agents that handle sales, marketing, and creative tasks around the clock. Connect 2,500+ APIs and 10,000+ tools securely via MCP.
+
+Key features:
+
+No-code AI agent creation and workflow building.
+Access a vast library of 10,000+ tools and 2,500+ APIs through MCP.
+Simple 3-step process to connect MCP servers.
+Securely manage connections and revoke access anytime.
+Learn more:
+
+AgenticFlow MCP Integration
+​
+AIQL TUUI
+AIQL TUUI is a native, cross-platform desktop AI chat application with MCP support. It supports multiple AI providers (e.g., Anthropic, Cloudflare, Deepseek, OpenAI, Qwen), local AI models (via vLLM, Ray, etc.), and aggregated API platforms (such as Deepinfra, Openrouter, and more).
+
+Key features:
+
+Dynamic LLM API & Agent Switching: Seamlessly toggle between different LLM APIs and agents on the fly.
+Comprehensive Capabilities Support: Built-in support for tools, prompts, resources, and sampling methods.
+Configurable Agents: Enhanced flexibility with selectable and customizable tools via agent settings.
+Advanced Sampling Control: Modify sampling parameters and leverage multi-round sampling for optimal results.
+Cross-Platform Compatibility: Fully compatible with macOS, Windows, and Linux.
+Free & Open-Source (FOSS): Permissive licensing allows modifications and custom app bundling.
+Learn more:
+
+TUUI document
+AIQL GitHub repository
+​
+Amazon Q CLI
+Amazon Q CLI is an open-source, agentic coding assistant for terminals.
+
+Key features:
+
+Full support for MCP servers.
+Edit prompts using your preferred text editor.
+Access saved prompts instantly with @.
+Control and organize AWS resources directly from your terminal.
+Tools, profiles, context management, auto-compact, and so much more!
+Get Started
+
+
+Copy
+brew install amazon-q
+​
+Amazon Q IDE
+Amazon Q IDE is an open-source, agentic coding assistant for IDEs.
+
+Key features:
+
+Support for the VSCode, JetBrains, Visual Studio, and Eclipse IDEs.
+Control and organize AWS resources directly from your IDE.
+Manage permissions for each MCP tool via the IDE user interface.
+​
+Apify MCP Tester
+Apify MCP Tester is an open-source client that connects to any MCP server using Server-Sent Events (SSE). It is a standalone Apify Actor designed for testing MCP servers over SSE, with support for Authorization headers. It uses plain JavaScript (old-school style) and is hosted on Apify, allowing you to run it without any setup.
+
+Key features:
+
+Connects to any MCP server via SSE.
+Works with the Apify MCP Server to interact with one or more Apify Actors.
+Dynamically utilizes tools based on context and user queries (if supported by the server).
+​
+Augment Code
+Augment Code is an AI-powered coding platform for VS Code and JetBrains with autonomous agents, chat, and completions. Both local and remote agents are backed by full codebase awareness and native support for MCP, enabling enhanced context through external sources and tools.
+
+Key features:
+
+Full MCP support in local and remote agents.
+Add additional context through MCP servers.
+Automate your development workflows with MCP tools.
+Works in VS Code and JetBrains IDEs.
+​
+BeeAI Framework
+BeeAI Framework is an open-source framework for building, deploying, and serving powerful agentic workflows at scale. The framework includes the MCP Tool, a native feature that simplifies the integration of MCP servers into agentic workflows.
+
+Key features:
+
+Seamlessly incorporate MCP tools into agentic workflows.
+Quickly instantiate framework-native tools from connected MCP client(s).
+Planned future support for agentic MCP capabilities.
+Learn more:
+
+Example of using MCP tools in agentic workflow
+​
+BoltAI
+BoltAI is a native, all-in-one AI chat client with MCP support. BoltAI supports multiple AI providers (OpenAI, Anthropic, Google AI…), including local AI models (via Ollama, LM Studio or LMX)
+
+Key features:
+
+MCP Tool integrations: once configured, user can enable individual MCP server in each chat
+MCP quick setup: import configuration from Claude Desktop app or Cursor editor
+Invoke MCP tools inside any app with AI Command feature
+Integrate with remote MCP servers in the mobile app
+Learn more:
+
+BoltAI docs
+BoltAI website
+​
+ChatWise
+ChatWise is a desktop-optimized, high-performance chat application that lets you bring your own API keys. It supports a wide range of LLMs and integrates with MCP to enable tool workflows.
+
+Key features:
+
+Tools support for MCP servers
+Offer built-in tools like web search, artifacts and image generation.
+​
+Claude Code
+Claude Code is an interactive agentic coding tool from Anthropic that helps you code faster through natural language commands. It supports MCP integration for resources, prompts, tools, and roots, and also functions as an MCP server to integrate with other clients.
+
+Key features:
+
+Full support for resources, prompts, tools, and roots from MCP servers
+Offers its own tools through an MCP server for integrating with other MCP clients
+​
+Claude.ai
+Claude.ai is Anthropic’s web-based AI assistant that provides MCP support for remote servers.
+
+Key features:
+
+Support for remote MCP servers via integrations UI in settings
+Access to tools, prompts, and resources from configured MCP servers
+Seamless integration with Claude’s conversational interface
+Enterprise-grade security and compliance features
+​
+Claude Desktop App
+The Claude desktop application provides comprehensive support for MCP, enabling deep integration with local tools and data sources.
+
+Key features:
+
+Full support for resources, allowing attachment of local files and data
+Support for prompt templates
+Tool integration for executing commands and scripts
+Local server connections for enhanced privacy and security
+​
+Chorus
+Chorus is a native Mac app for chatting with AIs. Chat with multiple models at once, run tools and MCPs, create projects, quick chat, bring your own key, all in a blazing fast, keyboard shortcut friendly app.
+
+Key features:
+
+MCP support with one-click install
+Built in tools, like web search, terminal, and image generation
+Chat with multiple models at once (cloud or local)
+Create projects with scoped memory
+Quick chat with an AI that can see your screen
+​
+Cline
+Cline is an autonomous coding agent in VS Code that edits files, runs commands, uses a browser, and more–with your permission at each step.
+
+Key features:
+
+Create and add tools through natural language (e.g. “add a tool that searches the web”)
+Share custom MCP servers Cline creates with others via the ~/Documents/Cline/MCP directory
+Displays configured MCP servers along with their tools, resources, and any error logs
+​
+CodeGPT
+CodeGPT is a popular VS Code and Jetbrains extension that brings AI-powered coding assistance to your editor. It supports integration with MCP servers for tools, allowing users to leverage external AI capabilities directly within their development workflow.
+
+Key features:
+
+Use MCP tools from any configured MCP server
+Seamless integration with VS Code and Jetbrains UI
+Supports multiple LLM providers and custom endpoints
+Learn more:
+
+CodeGPT Documentation
+​
+Continue
+Continue is an open-source AI code assistant, with built-in support for all MCP features.
+
+Key features:
+
+Type ”@” to mention MCP resources
+Prompt templates surface as slash commands
+Use both built-in and MCP tools directly in chat
+Supports VS Code and JetBrains IDEs, with any LLM
+​
+Copilot-MCP
+Copilot-MCP enables AI coding assistance via MCP.
+
+Key features:
+
+Support for MCP tools and resources
+Integration with development workflows
+Extensible AI capabilities
+​
+Cursor
+Cursor is an AI code editor.
+
+Key features:
+
+Support for MCP tools in Cursor Composer
+Support for both STDIO and SSE
+​
+Daydreams
+Daydreams is a generative agent framework for executing anything onchain
+
+Key features:
+
+Supports MCP Servers in config
+Exposes MCP Client
+​
+Emacs Mcp
+Emacs Mcp is an Emacs client designed to interface with MCP servers, enabling seamless connections and interactions. It provides MCP tool invocation support for AI plugins like gptel and llm, adhering to Emacs’ standard tool invocation format. This integration enhances the functionality of AI tools within the Emacs ecosystem.
+
+Key features:
+
+Provides MCP tool support for Emacs.
+​
+fast-agent
+fast-agent is a Python Agent framework, with simple declarative support for creating Agents and Workflows, with full multi-modal support for Anthropic and OpenAI models.
+
+Key features:
+
+PDF and Image support, based on MCP Native types
+Interactive front-end to develop and diagnose Agent applications, including passthrough and playback simulators
+Built in support for “Building Effective Agents” workflows.
+Deploy Agents as MCP Servers
+​
+FLUJO
+Think n8n + ChatGPT. FLUJO is an desktop application that integrates with MCP to provide a workflow-builder interface for AI interactions. Built with Next.js and React, it supports both online and offline (ollama) models, it manages API Keys and environment variables centrally and can install MCP Servers from GitHub. FLUJO has an ChatCompletions endpoint and flows can be executed from other AI applications like Cline, Roo or Claude.
+
+Key features:
+
+Environment & API Key Management
+Model Management
+MCP Server Integration
+Workflow Orchestration
+Chat Interface
+​
+Genkit
+Genkit is a cross-language SDK for building and integrating GenAI features into applications. The genkitx-mcp plugin enables consuming MCP servers as a client or creating MCP servers from Genkit tools and prompts.
+
+Key features:
+
+Client support for tools and prompts (resources partially supported)
+Rich discovery with support in Genkit’s Dev UI playground
+Seamless interoperability with Genkit’s existing tools and prompts
+Works across a wide variety of GenAI models from top providers
+​
+Glama
+Glama is a comprehensive AI workspace and integration platform that offers a unified interface to leading LLM providers, including OpenAI, Anthropic, and others. It supports the Model Context Protocol (MCP) ecosystem, enabling developers and enterprises to easily discover, build, and manage MCP servers.
+
+Key features:
+
+Integrated MCP Server Directory
+Integrated MCP Tool Directory
+Host MCP servers and access them via the Chat or SSE endpoints – Ability to chat with multiple LLMs and MCP servers at once
+Upload and analyze local files and data
+Full-text search across all your chats and data
+​
+GenAIScript
+Programmatically assemble prompts for LLMs using GenAIScript (in JavaScript). Orchestrate LLMs, tools, and data in JavaScript.
+
+Key features:
+
+JavaScript toolbox to work with prompts
+Abstraction to make it easy and productive
+Seamless Visual Studio Code integration
+​
+Goose
+Goose is an open source AI agent that supercharges your software development by automating coding tasks.
+
+Key features:
+
+Expose MCP functionality to Goose through tools.
+MCPs can be installed directly via the extensions directory, CLI, or UI.
+Goose allows you to extend its functionality by building your own MCP servers.
+Includes built-in tools for development, web scraping, automation, memory, and integrations with JetBrains and Google Drive.
+​
+gptme
+gptme is a open-source terminal-based personal AI assistant/agent, designed to assist with programming tasks and general knowledge work.
+
+Key features:
+
+CLI-first design with a focus on simplicity and ease of use
+Rich set of built-in tools for shell commands, Python execution, file operations, and web browsing
+Local-first approach with support for multiple LLM providers
+Open-source, built to be extensible and easy to modify
+​
+HyperAgent
+HyperAgent is Playwright supercharged with AI. With HyperAgent, you no longer need brittle scripts, just powerful natural language commands. Using MCP servers, you can extend the capability of HyperAgent, without having to write any code.
+
+Key features:
+
+AI Commands: Simple APIs like page.ai(), page.extract() and executeTask() for any AI automation
+Fallback to Regular Playwright: Use regular Playwright when AI isn’t needed
+Stealth Mode – Avoid detection with built-in anti-bot patches
+Cloud Ready – Instantly scale to hundreds of sessions via Hyperbrowser
+MCP Client – Connect to tools like Composio for full workflows (e.g. writing web data to Google Sheets)
+​
+JetBrains AI Assistant
+JetBrains AI Assistant plugin provides AI-powered features for software development available in all JetBrains IDEs.
+
+Key features:
+
+Unlimited code completion powered by Mellum, JetBrains’ proprietary AI model.
+Context-aware AI chat that understands your code and helps you in real time.
+Access to top-tier models from OpenAI, Anthropic, and Google.
+Offline mode with connected local LLMs via Ollama or LM Studio.
+Deep integration into IDE workflows, including code suggestions in the editor, VCS assistance, runtime error explanation, and more.
+​
+Kilo Code
+Kilo Code is an autonomous coding AI dev team in VS Code that edits files, runs commands, uses a browser, and more.
+
+Key features:
+
+Create and add tools through natural language (e.g. “add a tool that searches the web”)
+Discover MCP servers via the MCP Marketplace
+One click MCP server installs via MCP Marketplace
+Displays configured MCP servers along with their tools, resources, and any error logs
+​
+Klavis AI Slack/Discord/Web
+Klavis AI is an Open-Source Infra to Use, Build & Scale MCPs with ease.
+
+Key features:
+
+Slack/Discord/Web MCP clients for using MCPs directly
+Simple web UI dashboard for easy MCP configuration
+Direct OAuth integration with Slack & Discord Clients and MCP Servers for secure user authentication
+SSE transport support
+Open-source infrastructure (GitHub repository)
+Learn more:
+
+Demo video showing MCP usage in Slack/Discord
+​
+LibreChat
+LibreChat is an open-source, customizable AI chat UI that supports multiple AI providers, now including MCP integration.
+
+Key features:
+
+Extend current tool ecosystem, including Code Interpreter and Image generation tools, through MCP servers
+Add tools to customizable Agents, using a variety of LLMs from top providers
+Open-source and self-hostable, with secure multi-user support
+Future roadmap includes expanded MCP feature support
+​
+Lutra
+Lutra is an AI agent that transforms conversations into actionable, automated workflows.
+
+Key features:
+
+Easy MCP Integration: Connecting Lutra to MCP servers is as simple as providing the server URL; Lutra handles the rest behind the scenes.
+Chat to Take Action: Lutra understands your conversational context and goals, automatically integrating with your existing apps to perform tasks.
+Reusable Playbooks: After completing a task, save the steps as reusable, automated workflows—simplifying repeatable processes and reducing manual effort.
+Shareable Automations: Easily share your saved playbooks with teammates to standardize best practices and accelerate collaborative workflows.
+Learn more:
+
+Lutra AI agent explained
+​
+mcp-agent
+mcp-agent is a simple, composable framework to build agents using Model Context Protocol.
+
+Key features:
+
+Automatic connection management of MCP servers.
+Expose tools from multiple servers to an LLM.
+Implements every pattern defined in Building Effective Agents.
+Supports workflow pause/resume signals, such as waiting for human feedback.
+​
+mcp-client-chatbot
+mcp-client-chatbot is a local-first chatbot built with Vercel’s Next.js, AI SDK, and Shadcn UI.
+
+Key features:
+
+It supports standard MCP tool calling and includes both a custom MCP server and a standalone UI for testing MCP tools outside the chat flow.
+All MCP tools are provided to the LLM by default, but the project also includes an optional @toolname mention feature to make tool invocation more explicit—particularly useful when connecting to multiple MCP servers with many tools.
+Visual workflow builder that lets you create custom tools by chaining LLM nodes and MCP tools together. Published workflows become callable as @workflow_name tools in chat, enabling complex multi-step automation sequences.
+​
+mcp-use
+mcp-use is an open source python library to very easily connect any LLM to any MCP server both locally and remotely.
+
+Key features:
+
+Very simple interface to connect any LLM to any MCP.
+Support the creation of custom agents, workflows.
+Supports connection to multiple MCP servers simultaneously.
+Supports all langchain supported models, also locally.
+Offers efficient tool orchestration and search functionalities.
+​
+MCPHub
+MCPHub is a powerful Neovim plugin that integrates MCP (Model Context Protocol) servers into your workflow.
+
+Key features:
+
+Install, configure and manage MCP servers with an intuitive UI.
+Built-in Neovim MCP server with support for file operations (read, write, search, replace), command execution, terminal integration, LSP integration, buffers, and diagnostics.
+Create Lua-based MCP servers directly in Neovim.
+Inegrates with popular Neovim chat plugins Avante.nvim and CodeCompanion.nvim
+​
+MCPOmni-Connect
+MCPOmni-Connect is a versatile command-line interface (CLI) client designed to connect to various Model Context Protocol (MCP) servers using both stdio and SSE transport.
+
+Key features:
+
+Support for resources, prompts, tools, and sampling
+Agentic mode with ReAct and orchestrator capabilities
+Seamless integration with OpenAI models and other LLMs
+Dynamic tool and resource management across multiple servers
+Support for both stdio and SSE transport protocols
+Comprehensive tool orchestration and resource analysis capabilities
+​
+Memex
+Memex is the first MCP client and MCP server builder - all-in-one desktop app. Unlike traditional MCP clients that only consume existing servers, Memex can create custom MCP servers from natural language prompts, immediately integrate them into its toolkit, and use them to solve problems—all within a single conversation.
+
+Key features:
+
+Prompt-to-MCP Server: Generate fully functional MCP servers from natural language descriptions
+Self-Testing & Debugging: Autonomously test, debug, and improve created MCP servers
+Universal MCP Client: Works with any MCP server through intuitive, natural language integration
+Curated MCP Directory: Access to tested, one-click installable MCP servers (Neon, Netlify, GitHub, Context7, and more)
+Multi-Server Orchestration: Leverage multiple MCP servers simultaneously for complex workflows
+Learn more:
+
+Memex Launch 2: MCP Teams and Agent API
+​
+Microsoft Copilot Studio
+Microsoft Copilot Studio is a robust SaaS platform designed for building custom AI-driven applications and intelligent agents, empowering developers to create, deploy, and manage sophisticated AI solutions.
+
+Key features:
+
+Support for MCP tools
+Extend Copilot Studio agents with MCP servers
+Leveraging Microsoft unified, governed, and secure API management solutions
+​
+MindPal
+MindPal is a no-code platform for building and running AI agents and multi-agent workflows for business processes.
+
+Key features:
+
+Build custom AI agents with no-code
+Connect any SSE MCP server to extend agent tools
+Create multi-agent workflows for complex business processes
+User-friendly for both technical and non-technical professionals
+Ongoing development with continuous improvement of MCP support
+Learn more:
+
+MindPal MCP Documentation
+​
+MooPoint
+MooPoint
+
+MooPoint is a web-based AI chat platform built for developers and advanced users, letting you interact with multiple large language models (LLMs) through a single, unified interface. Connect your own API keys (OpenAI, Anthropic, and more) and securely manage custom MCP server integrations.
+
+Key features:
+
+Accessible from any PC or smartphone—no installation required
+Choose your preferred LLM provider
+Supports SSE, Streamable HTTP, npx, and uvx MCP servers
+OAuth and sampling support
+New features added daily
+​
+Msty Studio
+Msty Studio is a privacy-first AI productivity platform that seamlessly integrates local and online language models (LLMs) into customizable workflows. Designed for both technical and non-technical users, Msty Studio offers a suite of tools to enhance AI interactions, automate tasks, and maintain full control over data and model behavior.
+
+Key features:
+
+Toolbox & Toolsets: Connect AI models to local tools and scripts using MCP-compliant configurations. Group tools into Toolsets to enable dynamic, multi-step workflows within conversations.
+Turnstiles: Create automated, multi-step AI interactions, allowing for complex data processing and decision-making flows.
+Real-Time Data Integration: Enhance AI responses with up-to-date information by integrating real-time web search capabilities.
+Split Chats & Branching: Engage in parallel conversations with multiple models simultaneously, enabling comparative analysis and diverse perspectives.
+Learn more:
+
+Msty Studio Documentation
+​
+NVIDIA Agent Intelligence (AIQ) toolkit
+NVIDIA Agent Intelligence (AIQ) toolkit is a flexible, lightweight, and unifying library that allows you to easily connect existing enterprise agents to data sources and tools across any framework.
+
+Key features:
+
+Acts as an MCP client to consume remote tools
+Acts as an MCP server to expose tools
+Framework agnostic and compatible with LangChain, CrewAI, Semantic Kernel, and custom agents
+Includes built-in observability and evaluation tools
+Learn more:
+
+AIQ toolkit GitHub repository
+AIQ toolkit MCP documentation
+​
+OpenSumi
+OpenSumi is a framework helps you quickly build AI Native IDE products.
+
+Key features:
+
+Supports MCP tools in OpenSumi
+Supports built-in IDE MCP servers and custom MCP servers
+​
+oterm
+oterm is a terminal client for Ollama allowing users to create chats/agents.
+
+Key features:
+
+Support for multiple fully customizable chat sessions with Ollama connected with tools.
+Support for MCP tools.
+​
+Roo Code
+Roo Code enables AI coding assistance via MCP.
+
+Key features:
+
+Support for MCP tools and resources
+Integration with development workflows
+Extensible AI capabilities
+​
+Postman
+Postman is the most popular API client and now supports MCP server testing and debugging.
+
+Key features:
+
+Full support of all major MCP features (tools, prompts, resources, and subscriptions)
+Fast, seamless UI for debugging MCP capabilities
+MCP config integration (Claude, VSCode, etc.) for fast first-time experience in testing MCPs
+Integration with history, variables, and collections for reuse and collaboration
+​
+RecurseChat
+RecurseChat is a powerful, fast, local-first chat client with MCP support. RecurseChat supports multiple AI providers including LLaMA.cpp, Ollama, and OpenAI, Anthropic.
+
+Key features:
+
+Local AI: Support MCP with Ollama models.
+MCP Tools: Individual MCP server management. Easily visualize the connection states of MCP servers.
+MCP Import: Import configuration from Claude Desktop app or JSON
+Learn more:
+
+RecurseChat docs
+​
+Shortwave
+Shortwave is an AI-powered email client that supports MCP tools to enhance email productivity and workflow automation.
+
+Key features:
+
+MCP tool integration for enhanced email workflows
+Rich UI for adding, managing and interacting with a wide range of MCP servers
+Support for both remote (Streamable HTTP and SSE) and local (Stdio) MCP servers
+AI assistance for managing your emails, calendar, tasks and other third-party services
+​
+Slack MCP Client
+Slack MCP Client acts as a bridge between Slack and Model Context Protocol (MCP) servers. Using Slack as the interface, it enables large language models (LLMs) to connect and interact with various MCP servers through standardized MCP tools.
+
+Key features:
+
+Supports Popular LLM Providers: Integrates seamlessly with leading large language model providers such as OpenAI, Anthropic, and Ollama, allowing users to leverage advanced conversational AI and orchestration capabilities within Slack.
+Dynamic and Secure Integration: Supports dynamic registration of MCP tools, works in both channels and direct messages and manages credentials securely via environment variables or Kubernetes secrets.
+Easy Deployment and Extensibility: Offers official Docker images, a Helm chart for Kubernetes, and Docker Compose for local development, making it simple to deploy, configure, and extend with additional MCP servers or tools.
+​
+Sourcegraph Cody
+Cody is Sourcegraph’s AI coding assistant, which implements MCP through OpenCTX.
+
+Key features:
+
+Support for MCP resources
+Integration with Sourcegraph’s code intelligence
+Uses OpenCTX as an abstraction layer
+Future support planned for additional MCP features
+​
+SpinAI
+SpinAI is an open-source TypeScript framework for building observable AI agents. The framework provides native MCP compatibility, allowing agents to seamlessly integrate with MCP servers and tools.
+
+Key features:
+
+Built-in MCP compatibility for AI agents
+Open-source TypeScript framework
+Observable agent architecture
+Native support for MCP tools integration
+​
+Superinterface
+Superinterface is AI infrastructure and a developer platform to build in-app AI assistants with support for MCP, interactive components, client-side function calling and more.
+
+Key features:
+
+Use tools from MCP servers in assistants embedded via React components or script tags
+SSE transport support
+Use any AI model from any AI provider (OpenAI, Anthropic, Ollama, others)
+​
+Superjoin
+Superjoin brings the power of MCP directly into Google Sheets extension. With Superjoin, users can access and invoke MCP tools and agents without leaving their spreadsheets, enabling powerful AI workflows and automation right where their data lives.
+
+Key features:
+
+Native Google Sheets add-on providing effortless access to MCP capabilities
+Supports OAuth 2.1 and header-based authentication for secure and flexible connections
+Compatible with both SSE and Streamable HTTP transport
+
+
